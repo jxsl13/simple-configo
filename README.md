@@ -19,23 +19,26 @@ That's why the `configo.Parse`function looks the way it does, you pass an `env m
 
 In order to create your own custom configuration struct that is supposed to fetch values from your environment or a `.env` file, use a third party package or the `os` package to fetch a map of your envirnonment variables.
 
-
 ```go
+package main
 
 import (
+    "encoding/json"
+    "fmt"
     "time"
-    "github.com/jxsl13/simple-configo"
+
+    configo "github.com/jxsl13/simple-configo"
 )
 
 // MyConfig is a custom configuration that I want to use.
 type MyConfig struct {
-    SomeBool bool
-    SomeInt int
-    SomeFloat float64
+    SomeBool      bool
+    SomeInt       int
+    SomeFloat     float64
     SomeDelimiter string
-    SomeDuration time.Duration
-    SomeDelimitedList []string
-    SomeStringSet [string]bool
+    SomeDuration  time.Duration
+    SomeList      []string
+    SomeStringSet map[string]bool
 }
 
 // Name is the name of the configuration Cache
@@ -56,49 +59,49 @@ func (m *MyConfig) Options() (options configo.Options) {
             Mandatory:     true,
             Description:   "This is some description text.",
             DefaultValue:  "no",
-            ParseFunction: configo.DefaultParserBool(&c.SomeBool),
+            ParseFunction: configo.DefaultParserBool(&m.SomeBool),
         },
         {
             Key:           "SOME_INT",
             Type:          "int",
             Description:   "This is some description text.",
             DefaultValue:  "42",
-            ParseFunction: configo.DefaultParserInt(&c.SomeInt),
+            ParseFunction: configo.DefaultParserInt(&m.SomeInt),
         },
         {
             Key:           "SOME_FLOAT",
             Type:          "float",
             Description:   "This is some description text.",
             DefaultValue:  "99.99",
-            ParseFunction: configo.DefaultParserFloat(&c.SomeFloat, 64),
+            ParseFunction: configo.DefaultParserFloat(&m.SomeFloat, 64),
         },
         {
             Key:           "SOME_DELIMITER",
             Type:          "string",
             Description:   "delimiter to split the lists below.",
             DefaultValue:  " ",
-            ParseFunction: configo.DefaultParserString(&c.SomeDelimiter),
+            ParseFunction: configo.DefaultParserString(&m.SomeDelimiter),
         },
         {
             Key:           "SOME_DURATION",
             Type:          "duration",
             Description:   "This is some description text.",
             DefaultValue:  "24h12m44s",
-            ParseFunction: configo.DefaultParserDuration(&c.SomeDuration),
+            ParseFunction: configo.DefaultParserDuration(&m.SomeDuration),
         },
         {
             Key:           "SOME_LIST",
             Type:          "list",
             Description:   "Some IP list",
             DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3",
-            ParseFunction: configo.DefaultParserList(&c.SomeDuration),
+            ParseFunction: configo.DefaultParserList(m.SomeDelimiter, &m.SomeList),
         },
         {
             Key:           "SOME_SET",
             Type:          "",
             Description:   "This is some description text.",
             DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3 127.0.0.1",
-            ParseFunction: DefaultParserListToSet(&c.SomeDuration),
+            ParseFunction: configo.DefaultParserListToSet(m.SomeDelimiter, &m.SomeStringSet),
         },
     }
 
@@ -110,17 +113,16 @@ func (m *MyConfig) Options() (options configo.Options) {
     return options
 }
 
-
 func main() {
 
     env := map[string]string{
-        "MY_SOME_BOOL": "true",
-        "MY_SOME_INT": "10",
-        "MY_SOME_FLOAT": "12.5",
+        "MY_SOME_BOOL":      "true",
+        "MY_SOME_INT":       "10",
+        "MY_SOME_FLOAT":     "12.5",
         "MY_SOME_DELIMITER": ";",
-        "MY_SOME_DURATION": "12h",
-        "MY_SOME_LIST": "99;15;13;77",
-        "MY_SOME_SET": "99;15;13;77;99",
+        "MY_SOME_DURATION":  "12h",
+        "MY_SOME_LIST":      "99;15;13;77",
+        "MY_SOME_SET":       "99;15;13;77;99",
     }
 
     myCfg := &MyConfig{}
@@ -128,6 +130,12 @@ func main() {
         panic(err)
     }
 
+    b, err := json.MarshalIndent(&myCfg, " ", " ")
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Println(string(b))
 }
 ```
 
