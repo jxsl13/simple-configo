@@ -1,6 +1,6 @@
 # Simple-Configo
 
-Simple-Configo streamlines the creation of multiple independent configuration structs to the implementation of a single interface, the `Config` interface, that ha sonly two methods.
+Simple-Configo streamlines the creation of multiple independent configuration structs to the implementation of a single interface, the `Config` interface, that has only two methods.
 
 ```go
 type Config interface {
