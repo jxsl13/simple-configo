@@ -1,6 +1,7 @@
 package configo
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -135,4 +136,28 @@ func (o *Options) MustValid() {
 	for _, option := range *o {
 		option.MustValid()
 	}
+}
+
+func (o *Option) String() string {
+	type SubOption struct {
+		Key          string
+		Type         string
+		Description  string
+		Mandatory    bool
+		DefaultValue string
+	}
+
+	so := SubOption{
+		Key:          o.Key,
+		Type:         o.Type,
+		Description:  o.Description,
+		Mandatory:    o.Mandatory,
+		DefaultValue: o.DefaultValue,
+	}
+
+	b, err := json.MarshalIndent(&so, " ", " ")
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
 }
