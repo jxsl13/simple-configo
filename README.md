@@ -106,11 +106,11 @@ func (m *MyConfig) Options() (options configo.Options) {
     }
 
     // add prefix
-    for _, o := range optionsList {
-        o.Key = "MY_" + o.Key
+    for idx := range optionsList {
+        optionsList[idx].Key = "MY_" + optionsList[idx].Key
     }
 
-    return options
+    return optionsList
 }
 
 func main() {
@@ -130,11 +130,14 @@ func main() {
         panic(err)
     }
 
+    for _, opt := range myCfg.Options() {
+        fmt.Println(opt.String())
+    }
+
     b, err := json.MarshalIndent(&myCfg, " ", " ")
     if err != nil {
         panic(err)
     }
-
     fmt.Println(string(b))
 }
 ```
