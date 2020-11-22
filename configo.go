@@ -18,6 +18,10 @@ func Parse(cfg Config, env map[string]string) error {
 
 	options := cfg.Options()
 	for _, opt := range options {
+		if err := opt.IsValid(); err != nil {
+			return err
+		}
+
 		value, ok := env[opt.Key]
 		if opt.Mandatory {
 			if !ok {
