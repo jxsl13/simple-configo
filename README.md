@@ -9,7 +9,7 @@ type Config interface {
 }
 ```
 
-The `Name` method simply returns a string of your choise.
+The `Name` method simply returns a string of your choice.
 The `Options` method returns a list of `Option` objects that contain all of the logic needed to parse a config file into your custom struct fields.
 
 I usually fetch key-value pairs from a `.env` file as well the environment variables of your current user session.
