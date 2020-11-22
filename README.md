@@ -143,3 +143,7 @@ func main() {
 ```
 
 This is everything you need to write in order to parse a configuration file with key value pairs into a struct of your choise.
+
+## TODO
+
+- Remove 'Type' field of 'Option' struct, as all that's needed is actually the ParseFunction, ut gotta look further into it.
