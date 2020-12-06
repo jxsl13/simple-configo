@@ -132,3 +132,105 @@ func DefaultParserListToSet(delimiter *string, out *map[string]bool) ParserFunc 
 		return nil
 	}
 }
+
+// DefaultParserChoiseString restricts the string value to a given set of values
+// that are passed with the 'allowed' parameter.
+func DefaultParserChoiseString(out *string, allowed ...string) ParserFunc {
+
+	// create set only once in order to have a fast access later on
+	// in order not to waste RAM, we faste a few CPU cycles instead, if allowed contains
+	// redundant string values.
+	allowedSet := make(map[string]bool, len(allowed)/2)
+	for _, choise := range allowed {
+		allowedSet[choise] = true
+	}
+
+	return func(value string) error {
+
+		// value not allowed
+		if !allowedSet[value] {
+			return fmt.Errorf("Invalid value of type 'string' got: '%s', allowed: %v", value, allowedSet)
+		}
+
+		*out = value
+		return nil
+	}
+}
+
+// DefaultParserChoiseInt restricts the integer value to a given set of values
+// that are passed with the 'allowed' parameter.
+func DefaultParserChoiseInt(out *int, allowed ...int) ParserFunc {
+
+	// create set only once in order to have a fast access later on
+	// in order not to waste RAM, we faste a few CPU cycles instead, if allowed contains
+	// redundant string values.
+	allowedSet := make(map[int]bool, len(allowed)/2)
+	for _, choise := range allowed {
+		allowedSet[choise] = true
+	}
+
+	return func(value string) error {
+		i, err := strconv.Atoi(value)
+		if err != nil {
+			return fmt.Errorf("Invalid value of type 'integer': %s : %w", value, err)
+		}
+
+		// value not allowed
+		if !allowedSet[i] {
+			return fmt.Errorf("Invalid value of type 'integer' got: '%s', allowed: %v", value, allowedSet)
+		}
+
+		*out = i
+		return nil
+	}
+}
+
+// DefaultParserChoiseFloat restricts the float value to a given set of values
+// that are passed with the 'allowed' parameter.
+func DefaultParserChoiseFloat(out *float64, bitSize int, allowed ...float64) ParserFunc {
+
+	// create set only once in order to have a fast access later on
+	// in order not to waste RAM, we faste a few CPU cycles instead, if allowed contains
+	// redundant string values.
+	allowedSet := make(map[float64]bool, len(allowed)/2)
+	for _, choise := range allowed {
+		allowedSet[choise] = true
+	}
+
+	return func(value string) error {
+		f, err := strconv.ParseFloat(value, bitSize)
+		if err != nil {
+			return fmt.Errorf("Invalid value of type 'float': %s : %w", value, err)
+		}
+
+		// value not allowed
+		if !allowedSet[f] {
+			return fmt.Errorf("Invalid value of type 'float' got: '%s', allowed: %v", value, allowedSet)
+		}
+
+		*out = f
+		return nil
+	}
+}
+
+// DefaultParserRangesInt restricts the integer value to a distinct list of min-max ranges.
+// If the passed value to the returned function is not in any of these ranges, an error is returned.
+func DefaultParserRangesInt(out *int, minMaxRanges ...int) ParserFunc {
+
+	distinctRanges := newDistinctRangeListInt(minMaxRanges...)
+
+	return func(value string) error {
+		i, err := strconv.Atoi(value)
+		if err != nil {
+			return fmt.Errorf("Invalid value of type 'integer': %s : %w", value, err)
+		}
+
+		// value not allowed
+		if !distinctRanges.Contains(i) {
+			return fmt.Errorf("Invalid value of type 'integer' got: '%s', allowed ranges: %s", value, distinctRanges)
+		}
+
+		*out = i
+		return nil
+	}
+}
