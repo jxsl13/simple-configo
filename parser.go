@@ -133,23 +133,24 @@ func DefaultParserListToSet(delimiter *string, out *map[string]bool) ParserFunc 
 	}
 }
 
-// DefaultParserChoiseString restricts the string value to a given set of values
+// DefaultParserChoiceString restricts the string value to a given set of values
 // that are passed with the 'allowed' parameter.
-func DefaultParserChoiseString(out *string, allowed ...string) ParserFunc {
+func DefaultParserChoiceString(out *string, allowed ...string) ParserFunc {
 
 	// create set only once in order to have a fast access later on
-	// in order not to waste RAM, we faste a few CPU cycles instead, if allowed contains
+	// in order not to waste RAM, we waste a few CPU cycles instead, if allowed contains
 	// redundant string values.
 	allowedSet := make(map[string]bool, len(allowed)/2)
-	for _, choise := range allowed {
-		allowedSet[choise] = true
+	for _, choice := range allowed {
+		allowedSet[choice] = true
 	}
 
 	return func(value string) error {
 
 		// value not allowed
 		if !allowedSet[value] {
-			return fmt.Errorf("Invalid value of type 'string' got: '%s', allowed: %v", value, allowedSet)
+			allowedList := setToSortedListString(allowedSet)
+			return fmt.Errorf("Invalid value of type 'string' got: '%s', allowed: %v", value, allowedList)
 		}
 
 		*out = value
@@ -157,16 +158,16 @@ func DefaultParserChoiseString(out *string, allowed ...string) ParserFunc {
 	}
 }
 
-// DefaultParserChoiseInt restricts the integer value to a given set of values
+// DefaultParserChoiceInt restricts the integer value to a given set of values
 // that are passed with the 'allowed' parameter.
-func DefaultParserChoiseInt(out *int, allowed ...int) ParserFunc {
+func DefaultParserChoiceInt(out *int, allowed ...int) ParserFunc {
 
 	// create set only once in order to have a fast access later on
-	// in order not to waste RAM, we faste a few CPU cycles instead, if allowed contains
+	// in order not to waste RAM, we waste a few CPU cycles instead, if allowed contains
 	// redundant string values.
 	allowedSet := make(map[int]bool, len(allowed)/2)
-	for _, choise := range allowed {
-		allowedSet[choise] = true
+	for _, choice := range allowed {
+		allowedSet[choice] = true
 	}
 
 	return func(value string) error {
@@ -177,7 +178,8 @@ func DefaultParserChoiseInt(out *int, allowed ...int) ParserFunc {
 
 		// value not allowed
 		if !allowedSet[i] {
-			return fmt.Errorf("Invalid value of type 'integer' got: '%s', allowed: %v", value, allowedSet)
+			allowedList := setToSortedListInt(allowedSet)
+			return fmt.Errorf("Invalid value of type 'integer' got: '%s', allowed: %v", value, allowedList)
 		}
 
 		*out = i
@@ -185,16 +187,16 @@ func DefaultParserChoiseInt(out *int, allowed ...int) ParserFunc {
 	}
 }
 
-// DefaultParserChoiseFloat restricts the float value to a given set of values
+// DefaultParserChoiceFloat restricts the float value to a given set of values
 // that are passed with the 'allowed' parameter.
-func DefaultParserChoiseFloat(out *float64, bitSize int, allowed ...float64) ParserFunc {
+func DefaultParserChoiceFloat(out *float64, bitSize int, allowed ...float64) ParserFunc {
 
 	// create set only once in order to have a fast access later on
-	// in order not to waste RAM, we faste a few CPU cycles instead, if allowed contains
+	// in order not to waste RAM, we waste a few CPU cycles instead, if allowed contains
 	// redundant string values.
 	allowedSet := make(map[float64]bool, len(allowed)/2)
-	for _, choise := range allowed {
-		allowedSet[choise] = true
+	for _, choice := range allowed {
+		allowedSet[choice] = true
 	}
 
 	return func(value string) error {
@@ -205,7 +207,8 @@ func DefaultParserChoiseFloat(out *float64, bitSize int, allowed ...float64) Par
 
 		// value not allowed
 		if !allowedSet[f] {
-			return fmt.Errorf("Invalid value of type 'float' got: '%s', allowed: %v", value, allowedSet)
+			allowedList := setToSortedListFloat(allowedSet)
+			return fmt.Errorf("Invalid value of type 'float' got: '%s', allowed: %v", value, allowedList)
 		}
 
 		*out = f
@@ -215,6 +218,10 @@ func DefaultParserChoiseFloat(out *float64, bitSize int, allowed ...float64) Par
 
 // DefaultParserRangesInt restricts the integer value to a distinct list of min-max ranges.
 // If the passed value to the returned function is not in any of these ranges, an error is returned.
+// Example minMaxRange:
+// #1: 0,1024  		# range from 0 through 1024
+// #2: 0,3,9,10 	# range from 0 through 3 and from 9 through 10
+// #3: 0,10,2,12 	# rage from 0 through 12
 func DefaultParserRangesInt(out *int, minMaxRanges ...int) ParserFunc {
 
 	distinctRanges := newDistinctRangeListInt(minMaxRanges...)
@@ -227,7 +234,7 @@ func DefaultParserRangesInt(out *int, minMaxRanges ...int) ParserFunc {
 
 		// value not allowed
 		if !distinctRanges.Contains(i) {
-			return fmt.Errorf("Invalid value of type 'integer' got: '%s', allowed ranges: %s", value, distinctRanges)
+			return fmt.Errorf("Invalid value of type 'integer' got: '%s', allowed ranges: %s", value, distinctRanges.String())
 		}
 
 		*out = i

@@ -30,27 +30,27 @@ func (ir *intRange) Above(i int) bool {
 // sorting
 type byIntRange []intRange
 
-func (a byIntRange) Len() int           { return len(a) }
-func (a byIntRange) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a byIntRange) Less(i, j int) bool { return a[i].Min < a[j].Min }
+func (a byIntRange) Len() int      { return len(a) }
+func (a byIntRange) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a byIntRange) Less(i, j int) bool {
+	if a[i].Min == a[j].Min {
+		return a[i].Max < a[j].Max
+	}
+	return a[i].Min < a[j].Min
+}
 
 type distinctRangeListInt struct {
-	r        []intRange
-	isSorted bool
+	r []intRange
 }
 
 func (d *distinctRangeListInt) Contains(i int) bool {
-	if d.isSorted {
-		return binarySearchRangeInt(d.r, i)
-	}
-
-	sort.Sort(byIntRange(d.r))
-	d.isSorted = true
 	return binarySearchRangeInt(d.r, i)
 }
 
 func (d *distinctRangeListInt) String() string {
 	var sb strings.Builder
+	const expectedChars = 7
+	sb.Grow(expectedChars * len(d.r))
 
 	for idx, r := range d.r {
 		sb.WriteString(r.String())
@@ -58,7 +58,7 @@ func (d *distinctRangeListInt) String() string {
 			sb.WriteString(", ")
 		}
 	}
-
+	return sb.String()
 }
 
 func newDistinctRangeListInt(minMaxRanges ...int) distinctRangeListInt {
@@ -74,7 +74,7 @@ func newDistinctRangeListInt(minMaxRanges ...int) distinctRangeListInt {
 		if max < min {
 			min, max = max, min
 		}
-		rangesList = append(rangesList, intRange{min, max})
+		rangesList = append(rangesList, intRange{Min: min, Max: max})
 	}
 
 	distinctList := make([]intRange, 0, len(rangesList)/2)
@@ -99,34 +99,8 @@ func newDistinctRangeListInt(minMaxRanges ...int) distinctRangeListInt {
 			// skip current range after updating previously processed one
 			continue
 		}
-		// TODO: testing & c&p for floatRage
 		distinctList = append(distinctList, *currentRange)
 	}
 
-	return distinctRangeListInt{distinctList, true}
+	return distinctRangeListInt{distinctList}
 }
-
-// TODO:
-type floatRange struct {
-	Min float64
-	Max float64
-}
-
-func (fr *floatRange) Contains(f float64) bool {
-	return fr.Min <= f && f <= fr.Max
-}
-
-func (fr *floatRange) Below(f float64) bool {
-	return fr.Max < f
-}
-
-func (fr *floatRange) Above(f float64) bool {
-	return f < fr.Min
-}
-
-// sorting
-type byFloatRange []intRange
-
-func (a byFloatRange) Len() int           { return len(a) }
-func (a byFloatRange) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a byFloatRange) Less(i, j int) bool { return a[i].Max < a[j].Max }

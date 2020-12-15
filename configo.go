@@ -19,7 +19,7 @@ func Parse(cfg Config, env map[string]string) error {
 	options := cfg.Options()
 	for _, opt := range options {
 		if err := opt.IsValid(); err != nil {
-			return err
+			return fmt.Errorf("The option definition for '%s' is invalid: %w", opt.Key, err)
 		}
 
 		value, ok := env[opt.Key]
@@ -29,13 +29,16 @@ func Parse(cfg Config, env map[string]string) error {
 			}
 		}
 
-		if !ok {
-			if err := opt.ParseFunction(opt.DefaultValue); err != nil {
-				return err
-			}
-		} else {
+		// always write the default value in order to check if the programmed values are actually
+		// properly set to valid values.
+		if err := opt.ParseFunction(opt.DefaultValue); err != nil {
+			return fmt.Errorf("Error in default value of option '%s': %w", opt.Key, err)
+		}
+
+		// overwrite default value with config value
+		if ok {
 			if err := opt.ParseFunction(value); err != nil {
-				return err
+				return fmt.Errorf("Error in value of option '%s': %w", opt.Key, err)
 			}
 		}
 	}

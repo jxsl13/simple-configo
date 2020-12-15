@@ -31,8 +31,8 @@ var (
 	ErrOptionUnknownType = errors.New("The option has an unknown 'Type' field")
 	// ErrOptionMissingDefaultValue The option is missing its default fallback value
 	ErrOptionMissingDefaultValue = errors.New("The option is missing its default fallback value")
-	// ErrOptionInvalidDefaultValue The option has an invalid 'DefaultValue' field
-	ErrOptionInvalidDefaultValue = errors.New("The option has an invalid 'DefaultValue' field")
+	// ErrOptionInvalidDefaultValue The option has an invalid 'DefaultValue' field, please check its 'type' field
+	ErrOptionInvalidDefaultValue = errors.New("The option has an invalid 'DefaultValue' field, please check its 'type' field")
 	// ErrOptionMissingParseFunction The option is missing its 'ParseFunc' field
 	ErrOptionMissingParseFunction = errors.New("The option is missing its 'ParseFunc' field")
 )

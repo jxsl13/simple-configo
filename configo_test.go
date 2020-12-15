@@ -73,13 +73,17 @@ func TestParseDefaultValueError(t *testing.T) {
 }
 
 type MyConfig struct {
-	SomeBool      bool
-	SomeInt       int
-	SomeFloat     float64
-	SomeDelimiter string
-	SomeDuration  time.Duration
-	SomeList      []string
-	SomeStringSet map[string]bool
+	SomeBool         bool
+	SomeInt          int
+	SomeFloat        float64
+	SomeDelimiter    string
+	SomeDuration     time.Duration
+	SomeList         []string
+	SomeStringSet    map[string]bool
+	SomeChoiceInt    int
+	SomeChoiceFloat  float64
+	SomeChoiceString string
+	SomeRangeInt     int
 }
 
 func (m *MyConfig) String() string {
@@ -95,7 +99,11 @@ func (m *MyConfig) Equal(other MyConfig) bool {
 		m.SomeInt == other.SomeInt &&
 		m.SomeFloat == other.SomeFloat &&
 		m.SomeDelimiter == other.SomeDelimiter &&
-		m.SomeDuration == other.SomeDuration
+		m.SomeDuration == other.SomeDuration &&
+		m.SomeChoiceInt == other.SomeChoiceInt &&
+		m.SomeChoiceFloat == other.SomeChoiceFloat &&
+		m.SomeChoiceString == other.SomeChoiceString &&
+		m.SomeRangeInt == other.SomeRangeInt
 	if !eq {
 		return false
 	}
@@ -181,6 +189,34 @@ func (m *MyConfig) Options() (options Options) {
 			DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3 127.0.0.1",
 			ParseFunction: DefaultParserListToSet(&m.SomeDelimiter, &m.SomeStringSet),
 		},
+		{
+			Key:           "SOME_CHOICE_INT",
+			Type:          "int",
+			Description:   "This is some description text.",
+			DefaultValue:  "4",
+			ParseFunction: DefaultParserChoiceInt(&m.SomeChoiceInt, 1, 2, 3, 4, 5, 6),
+		},
+		{
+			Key:           "SOME_CHOICE_FLOAT",
+			Type:          "float",
+			Description:   "This is some description text.",
+			DefaultValue:  "5.5",
+			ParseFunction: DefaultParserChoiceFloat(&m.SomeChoiceFloat, 64, 1.1, 2.2, 3.3, 4.4, 5.5),
+		},
+		{
+			Key:           "SOME_CHOICE_STRING",
+			Type:          "string",
+			Description:   "This is some description text.",
+			DefaultValue:  "empty",
+			ParseFunction: DefaultParserChoiceString(&m.SomeChoiceString, "empty", "full", "half empty"),
+		},
+		{
+			Key:           "SOME_RANGE_INT",
+			Type:          "int",
+			Description:   "This is some description text.",
+			DefaultValue:  "42",
+			ParseFunction: DefaultParserRangesInt(&m.SomeRangeInt, 0, 99),
+		},
 	}
 
 	// add prefix
@@ -204,13 +240,17 @@ func TestParse(t *testing.T) {
 		wantErr bool
 	}{
 		{"#1", args{&MyConfig{}, map[string]string{
-			"MY_SOME_BOOL":      "true",
-			"MY_SOME_INT":       "1234567",
-			"MY_SOME_FLOAT":     "22.22",
-			"MY_SOME_DELIMITER": ",",
-			"MY_SOME_DURATION":  "24h",
-			"MY_SOME_LIST":      "1,2,3,4,5,6,7,8,9,0",
-			"MY_SOME_SET":       "1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7",
+			"MY_SOME_BOOL":          "true",
+			"MY_SOME_INT":           "1234567",
+			"MY_SOME_FLOAT":         "22.22",
+			"MY_SOME_DELIMITER":     ",",
+			"MY_SOME_DURATION":      "24h",
+			"MY_SOME_LIST":          "1,2,3,4,5,6,7,8,9,0",
+			"MY_SOME_SET":           "1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7",
+			"MY_SOME_CHOICE_INT":    "5",
+			"MY_SOME_CHOICE_FLOAT":  "1.1",
+			"MY_SOME_CHOICE_STRING": "full",
+			"MY_SOME_RANGE_INT":     "90",
 		}, &MyConfig{
 			SomeBool:      true,
 			SomeInt:       1234567,
@@ -230,6 +270,10 @@ func TestParse(t *testing.T) {
 				"9": true,
 				"0": true,
 			},
+			SomeChoiceInt:    5,
+			SomeChoiceFloat:  1.1,
+			SomeChoiceString: "full",
+			SomeRangeInt:     90,
 		}}, false},
 		{"#2", args{&MyConfig{}, map[string]string{
 			"MY_SOME_BOOL":      "false",
@@ -251,6 +295,10 @@ func TestParse(t *testing.T) {
 				"2": true,
 				"3": true,
 			},
+			SomeChoiceInt:    4,
+			SomeChoiceFloat:  5.5,
+			SomeChoiceString: "empty",
+			SomeRangeInt:     42,
 		}}, false},
 		{"#3", args{&MyConfig{}, map[string]string{
 			"MY_SOME_INT": "-123",
@@ -269,6 +317,10 @@ func TestParse(t *testing.T) {
 				"127.0.0.2": true,
 				"127.0.0.3": true,
 			},
+			SomeChoiceInt:    4,
+			SomeChoiceFloat:  5.5,
+			SomeChoiceString: "empty",
+			SomeRangeInt:     42,
 		}}, false},
 		{"#5", args{&MyConfig{}, map[string]string{
 			"MY_SOME_BOOL": "günni",
@@ -285,6 +337,31 @@ func TestParse(t *testing.T) {
 			"MY_SOME_BOOL":     "false",
 			"MY_SOME_DURATION": "99hs",
 		}, &MyConfig{}}, true},
+		{"#9", args{&MyConfig{}, map[string]string{
+			"MY_SOME_CHOICE_INT": "-5",
+		}, &MyConfig{}}, true},
+		{"#10", args{&MyConfig{}, map[string]string{
+			"MY_SOME_CHOICE_FLOAT": "9.9",
+		}, &MyConfig{}}, true},
+		{"#11", args{&MyConfig{}, map[string]string{
+			"MY_SOME_CHOICE_STRING": "not allowed",
+		}, &MyConfig{}}, true},
+		{"#12", args{&MyConfig{}, map[string]string{
+			"MY_SOME_RANGE_INT": "200",
+		}, &MyConfig{}}, true},
+
+		{"#13", args{&MyConfig{}, map[string]string{
+			"MY_SOME_CHOICE_INT": "-5",
+		}, &MyConfig{SomeChoiceInt: 4}}, true},
+		{"#14", args{&MyConfig{}, map[string]string{
+			"MY_SOME_CHOICE_FLOAT": "9.9",
+		}, &MyConfig{SomeChoiceFloat: 5.5}}, true},
+		{"#15", args{&MyConfig{}, map[string]string{
+			"MY_SOME_CHOICE_STRING": "not allowed",
+		}, &MyConfig{SomeChoiceString: "empty"}}, true},
+		{"#16", args{&MyConfig{}, map[string]string{
+			"MY_SOME_RANGE_INT": "200",
+		}, &MyConfig{SomeRangeInt: 42}}, true},
 	}
 
 	for idx, tt := range tests {
