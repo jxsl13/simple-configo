@@ -12,8 +12,6 @@ var (
 	ErrOptionMissingKey = errors.New("The option is missing the 'Key' field")
 	// ErrOptionMissingDescription The option is missing the 'Description' field
 	ErrOptionMissingDescription = errors.New("The option is missing the 'Description' field")
-	// ErrOptionUnknownType The option has an unknown 'Type' field
-	ErrOptionUnknownType = errors.New("The option has an unknown 'Type' field")
 	// ErrOptionMissingDefaultValue The option is missing its default fallback value
 	ErrOptionMissingDefaultValue = errors.New("The option is missing its default fallback value")
 	// ErrOptionInvalidDefaultValue The option has an invalid 'DefaultValue' field, please check its 'type' field
@@ -23,9 +21,6 @@ var (
 )
 
 // Option is a value that can be set to configure
-// Type can be one of the following values:
-// bool, string, integer, duration, list
-// list is a list of strings
 type Option struct {
 	Key           string
 	Description   string
