@@ -108,7 +108,7 @@ func DefaultParserDuration(out *time.Duration) ParserFunc {
 
 // DefaultParserList parses a string containing a 'delimiter'(space, comma, semicolon, etc.) delimited list
 // into the string list 'out'
-func DefaultParserList(delimiter *string, out *[]string) ParserFunc {
+func DefaultParserList(out *[]string, delimiter *string) ParserFunc {
 	return func(value string) error {
 		list := strings.Split(value, *delimiter)
 
@@ -122,7 +122,7 @@ func DefaultParserList(delimiter *string, out *[]string) ParserFunc {
 
 // DefaultParserListToSet parses a string containing a 'delimiter'(space, comma, semicolon, etc.) delimited list
 // into set 'out'
-func DefaultParserListToSet(delimiter *string, out *map[string]bool) ParserFunc {
+func DefaultParserListToSet(out *map[string]bool, delimiter *string) ParserFunc {
 	return func(value string) error {
 		list := strings.Split(value, *delimiter)
 

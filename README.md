@@ -19,7 +19,7 @@ That's why the `configo.Parse`function looks the way it does, you pass an `env m
 
 In order to create your own custom configuration struct that is supposed to fetch values from your environment or a `.env` file, use a third party package or the `os` package to fetch a map of your envirnonment variables.
 
-Go Playground example: [CLICK ME](https://play.golang.org/p/MRJxvSyzc0d)
+Go Playground example: [https://play.golang.org/p/Wc0FSCVvK1r](https://play.golang.org/p/Wc0FSCVvK1r)
 
 ```go
 package main
@@ -90,13 +90,13 @@ func (m *MyConfig) Options() (options configo.Options) {
             Key:           "SOME_LIST",
             Description:   "Some IP list",
             DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3",
-            ParseFunction: configo.DefaultParserList(m.SomeDelimiter, &m.SomeList),
+            ParseFunction: configo.DefaultParserList(&m.SomeList, &m.SomeDelimiter),
         },
         {
             Key:           "SOME_SET",
             Description:   "This is some description text.",
             DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3 127.0.0.1",
-            ParseFunction: configo.DefaultParserListToSet(m.SomeDelimiter, &m.SomeStringSet),
+            ParseFunction: configo.DefaultParserListToSet(&m.SomeStringSet, &m.SomeDelimiter),
         },
     }
 

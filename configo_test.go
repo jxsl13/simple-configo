@@ -172,13 +172,13 @@ func (m *MyConfig) Options() (options Options) {
 			Key:           "SOME_LIST",
 			Description:   "Some IP list",
 			DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3",
-			ParseFunction: DefaultParserList(&m.SomeDelimiter, &m.SomeList),
+			ParseFunction: DefaultParserList(&m.SomeList, &m.SomeDelimiter),
 		},
 		{
 			Key:           "SOME_SET",
 			Description:   "This is some description text.",
 			DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3 127.0.0.1",
-			ParseFunction: DefaultParserListToSet(&m.SomeDelimiter, &m.SomeStringSet),
+			ParseFunction: DefaultParserListToSet(&m.SomeStringSet, &m.SomeDelimiter),
 		},
 		{
 			Key:           "SOME_CHOICE_INT",
