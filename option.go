@@ -4,29 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
-	"time"
 )
 
 var (
-	// valid type strings
-	// TODO: could be extended with a RWMutex and the ability to
-	// be extended with a package function call, where new types can register
-	// themselves.
-	validTypes = []string{
-		"bool",
-		"string",
-		"int",
-		"float",
-		"duration",
-		"list",
-	}
+
 	// ErrOptionMissingKey The option is missing the 'Key' field
 	ErrOptionMissingKey = errors.New("The option is missing the 'Key' field")
 	// ErrOptionMissingDescription The option is missing the 'Description' field
 	ErrOptionMissingDescription = errors.New("The option is missing the 'Description' field")
-	// ErrOptionMissingType The option is missing its 'Type' field
-	ErrOptionMissingType = errors.New("The option is missing its 'Type' field")
 	// ErrOptionUnknownType The option has an unknown 'Type' field
 	ErrOptionUnknownType = errors.New("The option has an unknown 'Type' field")
 	// ErrOptionMissingDefaultValue The option is missing its default fallback value
@@ -43,7 +28,6 @@ var (
 // list is a list of strings
 type Option struct {
 	Key           string
-	Type          string
 	Description   string
 	Mandatory     bool
 	DefaultValue  string
@@ -65,23 +49,8 @@ func (o *Option) IsValid() error {
 		return ErrOptionMissingDefaultValue
 	}
 
-	if o.Type == "" {
-		return ErrOptionMissingType
-	}
-
-	isValidType := false
-	for _, t := range validTypes {
-		if t == o.Type {
-			isValidType = true
-			break
-		}
-	}
-	if !isValidType {
-		return ErrOptionUnknownType
-	}
-
-	if ok := isValidValue(o.Type, o.DefaultValue); !ok {
-		return ErrOptionInvalidDefaultValue
+	if err := o.ParseFunction(o.DefaultValue); err != nil {
+		return fmt.Errorf("%w : %v", ErrOptionInvalidDefaultValue, err)
 	}
 	return nil
 }
@@ -92,40 +61,6 @@ func (o *Option) MustValid() {
 	if err := o.IsValid(); err != nil {
 		panic(fmt.Sprintf("Error: %s : %v", o.Key, err))
 	}
-}
-
-func isValidValue(typestr, value string) bool {
-	isValid := false
-
-	switch typestr {
-	case "bool":
-		_, ok := boolValues[value]
-		isValid = ok
-	case "string":
-		return true
-	case "int":
-		_, err := strconv.ParseInt(value, 10, 64)
-		if err == nil {
-			isValid = true
-		}
-	case "duration":
-		_, err := time.ParseDuration(value)
-		if err == nil {
-			isValid = true
-		}
-	case "list":
-		return true
-	case "float":
-		_, err := strconv.ParseFloat(value, 64)
-		if err == nil {
-			isValid = true
-		}
-	default:
-		// unknown types
-		isValid = false
-	}
-
-	return isValid
 }
 
 // Options are usually unique, so one MUST NOT use redundant Option parameters
@@ -141,7 +76,6 @@ func (o *Options) MustValid() {
 func (o *Option) String() string {
 	type SubOption struct {
 		Key          string
-		Type         string
 		Description  string
 		Mandatory    bool
 		DefaultValue string
@@ -149,7 +83,6 @@ func (o *Option) String() string {
 
 	so := SubOption{
 		Key:          o.Key,
-		Type:         o.Type,
 		Description:  o.Description,
 		Mandatory:    o.Mandatory,
 		DefaultValue: o.DefaultValue,

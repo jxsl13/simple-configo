@@ -7,7 +7,7 @@ import (
 )
 
 type ErrorConfig struct {
-	SomeField string
+	SomeField int
 }
 
 func (ec *ErrorConfig) Name() string {
@@ -18,10 +18,9 @@ func (ec *ErrorConfig) Options() Options {
 	optionsList := Options{
 		{
 			Key:           "SOME_FIELD",
-			Type:          "",
 			Description:   "This is some description text.",
 			DefaultValue:  "SOME FIELD",
-			ParseFunction: DefaultParserString(&ec.SomeField),
+			ParseFunction: DefaultParserInt(&ec.SomeField),
 		},
 	}
 
@@ -52,7 +51,6 @@ func (ec *ErrorDefaultValuConfig) Options() Options {
 	optionsList := Options{
 		{
 			Key:           "SOME_FIELD",
-			Type:          "bool",
 			Description:   "This is some description text.",
 			DefaultValue:  "2",
 			ParseFunction: DefaultParserBool(&ec.SomeField),
@@ -141,7 +139,6 @@ func (m *MyConfig) Options() (options Options) {
 	optionsList := Options{
 		{
 			Key:           "SOME_BOOL",
-			Type:          "bool",
 			Mandatory:     true,
 			Description:   "This is some description text.",
 			DefaultValue:  "no",
@@ -149,70 +146,60 @@ func (m *MyConfig) Options() (options Options) {
 		},
 		{
 			Key:           "SOME_INT",
-			Type:          "int",
 			Description:   "This is some description text.",
 			DefaultValue:  "42",
 			ParseFunction: DefaultParserInt(&m.SomeInt),
 		},
 		{
 			Key:           "SOME_FLOAT",
-			Type:          "float",
 			Description:   "This is some description text.",
 			DefaultValue:  "99.99",
 			ParseFunction: DefaultParserFloat(&m.SomeFloat, 64),
 		},
 		{
 			Key:           "SOME_DELIMITER",
-			Type:          "string",
 			Description:   "delimiter to split the lists below.",
 			DefaultValue:  " ",
 			ParseFunction: DefaultParserString(&m.SomeDelimiter),
 		},
 		{
 			Key:           "SOME_DURATION",
-			Type:          "duration",
 			Description:   "This is some description text.",
 			DefaultValue:  "24h12m44s",
 			ParseFunction: DefaultParserDuration(&m.SomeDuration),
 		},
 		{
 			Key:           "SOME_LIST",
-			Type:          "list",
 			Description:   "Some IP list",
 			DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3",
 			ParseFunction: DefaultParserList(&m.SomeDelimiter, &m.SomeList),
 		},
 		{
 			Key:           "SOME_SET",
-			Type:          "list",
 			Description:   "This is some description text.",
 			DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3 127.0.0.1",
 			ParseFunction: DefaultParserListToSet(&m.SomeDelimiter, &m.SomeStringSet),
 		},
 		{
 			Key:           "SOME_CHOICE_INT",
-			Type:          "int",
 			Description:   "This is some description text.",
 			DefaultValue:  "4",
 			ParseFunction: DefaultParserChoiceInt(&m.SomeChoiceInt, 1, 2, 3, 4, 5, 6),
 		},
 		{
 			Key:           "SOME_CHOICE_FLOAT",
-			Type:          "float",
 			Description:   "This is some description text.",
 			DefaultValue:  "5.5",
 			ParseFunction: DefaultParserChoiceFloat(&m.SomeChoiceFloat, 64, 1.1, 2.2, 3.3, 4.4, 5.5),
 		},
 		{
 			Key:           "SOME_CHOICE_STRING",
-			Type:          "string",
 			Description:   "This is some description text.",
 			DefaultValue:  "empty",
 			ParseFunction: DefaultParserChoiceString(&m.SomeChoiceString, "empty", "full", "half empty"),
 		},
 		{
 			Key:           "SOME_RANGE_INT",
-			Type:          "int",
 			Description:   "This is some description text.",
 			DefaultValue:  "42",
 			ParseFunction: DefaultParserRangesInt(&m.SomeRangeInt, 0, 99),

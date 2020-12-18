@@ -57,7 +57,6 @@ func (m *MyConfig) Options() (options configo.Options) {
     optionsList := configo.Options{
         {
             Key:           "SOME_BOOL",
-            Type:          "bool",
             Mandatory:     true,
             Description:   "This is some description text.",
             DefaultValue:  "no",
@@ -65,42 +64,36 @@ func (m *MyConfig) Options() (options configo.Options) {
         },
         {
             Key:           "SOME_INT",
-            Type:          "int",
             Description:   "This is some description text.",
             DefaultValue:  "42",
             ParseFunction: configo.DefaultParserInt(&m.SomeInt),
         },
         {
             Key:           "SOME_FLOAT",
-            Type:          "float",
             Description:   "This is some description text.",
             DefaultValue:  "99.99",
             ParseFunction: configo.DefaultParserFloat(&m.SomeFloat, 64),
         },
         {
             Key:           "SOME_DELIMITER",
-            Type:          "string",
             Description:   "delimiter to split the lists below.",
             DefaultValue:  " ",
             ParseFunction: configo.DefaultParserString(&m.SomeDelimiter),
         },
         {
             Key:           "SOME_DURATION",
-            Type:          "duration",
             Description:   "This is some description text.",
             DefaultValue:  "24h12m44s",
             ParseFunction: configo.DefaultParserDuration(&m.SomeDuration),
         },
         {
             Key:           "SOME_LIST",
-            Type:          "list",
             Description:   "Some IP list",
             DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3",
             ParseFunction: configo.DefaultParserList(m.SomeDelimiter, &m.SomeList),
         },
         {
             Key:           "SOME_SET",
-            Type:          "",
             Description:   "This is some description text.",
             DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3 127.0.0.1",
             ParseFunction: configo.DefaultParserListToSet(m.SomeDelimiter, &m.SomeStringSet),
