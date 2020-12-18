@@ -148,4 +148,5 @@ This is everything you need to write in order to parse a configuration file with
 
 ## TODO
 
-- Remove 'Type' field of 'Option' struct, as all that's needed is actually the ParseFunction, ut gotta look further into it.
+- Remove 'Type' field of 'Option' struct, as all that's needed is actually the ParseFunction, but gotta look further into it.
+- Create DefaultParserWrapperXXX(f ParserFunc) (g ParserFunc) functions that may wrap those functions howewer they want?

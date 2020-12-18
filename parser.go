@@ -1,7 +1,9 @@
 package configo
 
 import (
+	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -29,6 +31,9 @@ var (
 		"disable":  false,
 		"DISABLE":  false,
 	}
+
+	// ErrParsing is returned when parsing of a key fails.
+	ErrParsing = errors.New("Parsing Error")
 )
 
 // ParserFunc is a custom parser function that can be used to parse specific option values
@@ -238,6 +243,19 @@ func DefaultParserRangesInt(out *int, minMaxRanges ...int) ParserFunc {
 		}
 
 		*out = i
+		return nil
+	}
+}
+
+// DefaultParserRegex allows the value of a key to be compliant to a regular expression.
+func DefaultParserRegex(out *string, regex, errMsg string) ParserFunc {
+	r := regexp.MustCompile(regex)
+	return func(value string) error {
+		if !r.MatchString(value) {
+			return fmt.Errorf("%w : %s", ErrParsing, errMsg)
+		}
+
+		*out = value
 		return nil
 	}
 }
