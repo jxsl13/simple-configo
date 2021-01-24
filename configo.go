@@ -31,7 +31,9 @@ func Parse(cfg Config, env map[string]string) error {
 
 		// always write the default value in order to check if the programmed values are actually
 		// properly set to valid values.
-		if err := opt.ParseFunction(opt.DefaultValue); err != nil {
+		// Only check this when the value is not mandatory, as you may have invalid
+		// default values, because you expect user input!
+		if err := opt.ParseFunction(opt.DefaultValue); !opt.Mandatory && err != nil {
 			return fmt.Errorf("Error in default value of option '%s': %w", opt.Key, err)
 		}
 
