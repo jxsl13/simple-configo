@@ -13,7 +13,7 @@ var (
 	// ErrOptionMissingDescription The option is missing the 'Description' field
 	ErrOptionMissingDescription = errors.New("The option is missing the 'Description' field")
 	// ErrOptionInvalidDefaultValue The option has an invalid 'DefaultValue' field, please check its 'type' field
-	ErrOptionInvalidDefaultValue = errors.New("The option has an invalid 'DefaultValue' field, please check its 'type' field")
+	ErrOptionInvalidDefaultValue = errors.New("The option has an invalid 'DefaultValue' field")
 	// ErrOptionMissingParseFunction The option is missing its 'ParseFunc' field
 	ErrOptionMissingParseFunction = errors.New("The option is missing its 'ParseFunc' field")
 )
@@ -38,7 +38,7 @@ func (o *Option) IsValid() error {
 		return ErrOptionMissingDescription
 	}
 
-	if err := o.ParseFunction(o.DefaultValue); err != nil {
+	if err := o.ParseFunction(o.DefaultValue); !o.Mandatory && err != nil {
 		return fmt.Errorf("%w : %v", ErrOptionInvalidDefaultValue, err)
 	}
 	return nil
