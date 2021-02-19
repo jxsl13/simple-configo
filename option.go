@@ -38,9 +38,13 @@ func (o *Option) IsValid() error {
 		return ErrOptionMissingDescription
 	}
 
-	if err := o.ParseFunction(o.DefaultValue); !o.Mandatory && err != nil {
-		return fmt.Errorf("%w : %v", ErrOptionInvalidDefaultValue, err)
+	if o.DefaultValue != "" || !o.Mandatory {
+		err := o.ParseFunction(o.DefaultValue)
+		if err != nil {
+			return fmt.Errorf("%w : %v", ErrOptionInvalidDefaultValue, err)
+		}
 	}
+
 	return nil
 }
 

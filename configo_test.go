@@ -288,8 +288,24 @@ func TestParse(t *testing.T) {
 			SomeRangeInt:     42,
 		}}, false},
 		{"#3", args{&MyConfig{}, map[string]string{
-			"MY_SOME_INT": "-123",
-		}, &MyConfig{}}, true},
+			"MY_SOME_INT": "42",
+		}, &MyConfig{
+			SomeBool:      false,
+			SomeInt:       42,
+			SomeFloat:     99.99,
+			SomeDelimiter: " ",
+			SomeDuration:  24*time.Hour + 12*time.Minute + 44*time.Second,
+			SomeList:      []string{"127.0.0.1", "127.0.0.2", "127.0.0.3"},
+			SomeStringSet: map[string]bool{
+				"127.0.0.1": true,
+				"127.0.0.2": true,
+				"127.0.0.3": true,
+			},
+			SomeChoiceInt:    4,
+			SomeChoiceFloat:  5.5,
+			SomeChoiceString: "empty",
+			SomeRangeInt:     42,
+		}}, false},
 		{"#4", args{&MyConfig{}, map[string]string{
 			"MY_SOME_BOOL": "false",
 		}, &MyConfig{
@@ -349,6 +365,250 @@ func TestParse(t *testing.T) {
 		{"#16", args{&MyConfig{}, map[string]string{
 			"MY_SOME_RANGE_INT": "200",
 		}, &MyConfig{SomeRangeInt: 42}}, true},
+		{"#17", args{&MyConfig{}, map[string]string{
+			"MY_SOME_RANGE_INT": "200",
+		}, &MyConfig{SomeRangeInt: 42}}, true},
+	}
+
+	for idx, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			err := Parse(tt.args.cfg, tt.args.env)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if err == nil && !tt.args.cfg.Equal(*tt.args.result) {
+				t.Fatalf("#%d : Parse() error = UNEXPECTED RESULT\nWANT:\n%s\nGOT:\n%s\n", idx+1, tt.args.result, tt.args.cfg)
+			}
+		})
+	}
+}
+
+type MandatoryConfig struct {
+	MandatoryRegex string
+}
+
+func (m *MandatoryConfig) Equal(other MandatoryConfig) bool {
+	return m.MandatoryRegex == other.MandatoryRegex
+}
+
+func (m *MandatoryConfig) Name() string {
+	return "Mandatory Config"
+}
+
+func (m *MandatoryConfig) Options() Options {
+	return Options{
+		{
+			Key:           "MANDATORY_REGEX",
+			Mandatory:     true,
+			Description:   "This is some description text.",
+			DefaultValue:  "mandatory",
+			ParseFunction: DefaultParserRegex(&m.MandatoryRegex, "[a-z]+", "must only contain a-z"),
+		},
+	}
+}
+
+func TestMandatoryParse(t *testing.T) {
+	type args struct {
+		cfg    *MandatoryConfig
+		env    map[string]string
+		result *MandatoryConfig
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{"#1", args{&MandatoryConfig{}, map[string]string{
+			"MANDATORY_REGEX": "",
+		}, &MandatoryConfig{
+			MandatoryRegex: "mandatory",
+		}}, true},
+		{"#2", args{&MandatoryConfig{}, map[string]string{},
+			&MandatoryConfig{
+				MandatoryRegex: "mandatory",
+			}}, false},
+	}
+
+	for idx, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			err := Parse(tt.args.cfg, tt.args.env)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if err == nil && !tt.args.cfg.Equal(*tt.args.result) {
+				t.Fatalf("#%d : Parse() error = UNEXPECTED RESULT\nWANT:\n%s\nGOT:\n%s\n", idx+1, tt.args.result, tt.args.cfg)
+			}
+		})
+	}
+}
+
+type InvalidMandatoryConfig struct {
+	MandatoryRegex string
+}
+
+func (m *InvalidMandatoryConfig) Equal(other InvalidMandatoryConfig) bool {
+	return m.MandatoryRegex == other.MandatoryRegex
+}
+
+func (m *InvalidMandatoryConfig) Name() string {
+	return "Mandatory Config"
+}
+
+func (m *InvalidMandatoryConfig) Options() Options {
+	return Options{
+		{
+			Key:           "MANDATORY_REGEX",
+			Mandatory:     true,
+			Description:   "This is some description text.",
+			DefaultValue:  "15", // Configuration definition is invalid at this point
+			ParseFunction: DefaultParserRegex(&m.MandatoryRegex, "[a-z]+", "must only contain a-z"),
+		},
+	}
+}
+
+func TestInvalidMandatoryParse(t *testing.T) {
+	type args struct {
+		cfg    *InvalidMandatoryConfig
+		env    map[string]string
+		result *InvalidMandatoryConfig
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{"#1", args{&InvalidMandatoryConfig{}, map[string]string{
+			"MANDATORY_REGEX": "",
+		}, &InvalidMandatoryConfig{}}, true},
+		{"#2", args{&InvalidMandatoryConfig{}, map[string]string{},
+			&InvalidMandatoryConfig{}}, true},
+	}
+
+	for idx, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			err := Parse(tt.args.cfg, tt.args.env)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if err == nil && !tt.args.cfg.Equal(*tt.args.result) {
+				t.Fatalf("#%d : Parse() error = UNEXPECTED RESULT\nWANT:\n%s\nGOT:\n%s\n", idx+1, tt.args.result, tt.args.cfg)
+			}
+		})
+	}
+}
+
+type EmptyMandatoryConfig struct {
+	MandatoryRegex string
+}
+
+func (m *EmptyMandatoryConfig) Equal(other EmptyMandatoryConfig) bool {
+	return m.MandatoryRegex == other.MandatoryRegex
+}
+
+func (m *EmptyMandatoryConfig) Name() string {
+	return "Mandatory Config"
+}
+
+func (m *EmptyMandatoryConfig) Options() Options {
+	return Options{
+		{
+			Key:           "MANDATORY_REGEX",
+			Mandatory:     true,
+			Description:   "This is some description text.",
+			ParseFunction: DefaultParserRegex(&m.MandatoryRegex, "[a-z]+", "must only contain a-z"),
+		},
+	}
+}
+
+func TestEmptyMandatoryParse(t *testing.T) {
+	type args struct {
+		cfg    *EmptyMandatoryConfig
+		env    map[string]string
+		result *EmptyMandatoryConfig
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{"#1", args{&EmptyMandatoryConfig{}, map[string]string{
+			"MANDATORY_REGEX": "",
+		}, &EmptyMandatoryConfig{}}, true},
+		{"#2", args{&EmptyMandatoryConfig{}, map[string]string{},
+			&EmptyMandatoryConfig{}}, true},
+		{"#3", args{&EmptyMandatoryConfig{}, map[string]string{
+			"MANDATORY_REGEX": "mandatory",
+		}, &EmptyMandatoryConfig{
+			MandatoryRegex: "mandatory",
+		}}, false},
+	}
+
+	for idx, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			err := Parse(tt.args.cfg, tt.args.env)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if err == nil && !tt.args.cfg.Equal(*tt.args.result) {
+				t.Fatalf("#%d : Parse() error = UNEXPECTED RESULT\nWANT:\n%s\nGOT:\n%s\n", idx+1, tt.args.result, tt.args.cfg)
+			}
+		})
+	}
+}
+
+type InvalidDefaultValueConfig struct {
+	MandatoryRegex string
+}
+
+func (m *InvalidDefaultValueConfig) Equal(other InvalidDefaultValueConfig) bool {
+	return m.MandatoryRegex == other.MandatoryRegex
+}
+
+func (m *InvalidDefaultValueConfig) Name() string {
+	return "Mandatory Config"
+}
+
+func (m *InvalidDefaultValueConfig) Options() Options {
+	return Options{
+		{
+			Key:           "MANDATORY_REGEX",
+			Mandatory:     true,
+			Description:   "This is some description text.",
+			DefaultValue:  "15",
+			ParseFunction: DefaultParserRegex(&m.MandatoryRegex, "[a-z]+", "must only contain a-z"),
+		},
+	}
+}
+
+func TestInvalidDefaultValueParse(t *testing.T) {
+	type args struct {
+		cfg    *InvalidDefaultValueConfig
+		env    map[string]string
+		result *InvalidDefaultValueConfig
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{"#1", args{&InvalidDefaultValueConfig{}, map[string]string{
+			"MANDATORY_REGEX": "",
+		}, &InvalidDefaultValueConfig{}}, true},
+		{"#2", args{&InvalidDefaultValueConfig{}, map[string]string{},
+			&InvalidDefaultValueConfig{}}, true},
+		{"#3", args{&InvalidDefaultValueConfig{}, map[string]string{
+			"MANDATORY_REGEX": "mandatory",
+		}, &InvalidDefaultValueConfig{
+			MandatoryRegex: "mandatory",
+		}}, true},
 	}
 
 	for idx, tt := range tests {

@@ -18,26 +18,22 @@ func Parse(cfg Config, env map[string]string) error {
 
 	options := cfg.Options()
 	for _, opt := range options {
+
+		// Initially the config values are set to the default value, if the default value is valid
 		if err := opt.IsValid(); err != nil {
 			return fmt.Errorf("The option definition for '%s' is invalid: %w", opt.Key, err)
 		}
 
 		value, ok := env[opt.Key]
 		if opt.Mandatory {
-			if !ok {
+			if opt.DefaultValue == "" && !ok {
+				// no default value and no value in environment
 				return fmt.Errorf("Error: missing mandatory key: %s", opt.Key)
 			}
 		}
 
-		// always write the default value in order to check if the programmed values are actually
-		// properly set to valid values.
-		// Only check this when the value is not mandatory, as you may have invalid
-		// default values, because you expect user input!
-		if err := opt.ParseFunction(opt.DefaultValue); !opt.Mandatory && err != nil {
-			return fmt.Errorf("Error in default value of option '%s': %w", opt.Key, err)
-		}
-
-		// overwrite default value with config value
+		// if we do get a valid value from the passed map, the default value is
+		// overwritten then
 		if ok {
 			if err := opt.ParseFunction(value); err != nil {
 				return fmt.Errorf("Error in value of option '%s': %w", opt.Key, err)
