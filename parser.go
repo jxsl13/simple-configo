@@ -158,8 +158,11 @@ func DefaultParserUniqueList(out *[]string, delimiter *string) ParserFunc {
 }
 
 // DefaultParserMap allows to define key->value associations directly inside of a single parameter
-func DefaultParserMap(out *map[string]string, pairDelimiter *string, keyValueDelimiter *string) ParserFunc {
+func DefaultParserMap(out *map[string]string, pairDelimiter, keyValueDelimiter *string) ParserFunc {
 	return func(value string) error {
+		if *pairDelimiter == *keyValueDelimiter {
+			return fmt.Errorf("pairDelimiter and keyValueDelimiter must not be equal: '%s'", *pairDelimiter)
+		}
 		pairs := strings.Split(value, *pairDelimiter)
 		m := make(map[string]string, len(pairs))
 		for _, pair := range pairs {
