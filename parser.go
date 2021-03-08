@@ -157,10 +157,41 @@ func DefaultParserUniqueList(out *[]string, delimiter *string) ParserFunc {
 	}
 }
 
-// DefaultParserMap fills the 'out' map with the keys and for each key the corresponding
+// DefaultParserMap allows to define key->value associations directly inside of a single parameter
+func DefaultParserMap(out *map[string]string, pairDelimiter *string, keyValueDelimiter *string) ParserFunc {
+	return func(value string) error {
+		pairs := strings.Split(value, *pairDelimiter)
+		m := make(map[string]string, len(pairs))
+		for _, pair := range pairs {
+			list := strings.Split(pair, *keyValueDelimiter)
+			if len(list) != 2 {
+				return fmt.Errorf("'%s' is not a key value pair with delimiter '%s'", pair, *keyValueDelimiter)
+			}
+			key := list[0]
+			value := list[1]
+
+			if _, ok := m[key]; ok {
+				return fmt.Errorf("duplicate key detected: %s", key)
+			}
+
+			m[key] = value
+		}
+
+		if *out == nil {
+			*out = make(map[string]string, len(pairs))
+		}
+
+		for key, value := range m {
+			(*out)[key] = value
+		}
+		return nil
+	}
+}
+
+// DefaultParserMapFromKeysSlice fills the 'out' map with the keys and for each key the corresponding
 // value at the exact same position of the passed "value" string that is split into another
 // list is creates. keys{0, 1, 2, 3} -> values{0, 1, 2, 3}
-func DefaultParserMap(out *map[string]string, keys *[]string, delimiter *string) ParserFunc {
+func DefaultParserMapFromKeysSlice(out *map[string]string, keys *[]string, delimiter *string) ParserFunc {
 	return func(value string) error {
 		values := strings.Split(value, *delimiter)
 

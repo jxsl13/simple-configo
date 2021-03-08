@@ -5,8 +5,9 @@ import (
 )
 
 type MapConfig struct {
-	UniqueList []string
-	Mapping    map[string]string
+	UniqueList     []string
+	Mapping        map[string]string
+	SingleValueMap map[string]string
 }
 
 func (m *MapConfig) Equal(other MapConfig) bool {
@@ -30,6 +31,12 @@ func (m *MapConfig) Equal(other MapConfig) bool {
 		}
 	}
 
+	for key, value := range m.SingleValueMap {
+		if other.SingleValueMap[key] != value {
+			return false
+		}
+	}
+
 	return true
 }
 
@@ -39,6 +46,8 @@ func (m *MapConfig) Name() string {
 
 func (m *MapConfig) Options() Options {
 	delimiter := " "
+	pairDelimiter := ";"
+	keyValueDelimiter := "->"
 	return Options{
 		{
 			Key:           "SOURCE_LIST",
@@ -50,7 +59,13 @@ func (m *MapConfig) Options() Options {
 			Key:           "TARGET_LIST",
 			Mandatory:     true,
 			Description:   "This is some description text.",
-			ParseFunction: DefaultParserMap(&m.Mapping, &m.UniqueList, &delimiter),
+			ParseFunction: DefaultParserMapFromKeysSlice(&m.Mapping, &m.UniqueList, &delimiter),
+		},
+		{
+			Key:           "SINGLE_VALUE_MAP",
+			Mandatory:     true,
+			Description:   "This is some description text.",
+			ParseFunction: DefaultParserMap(&m.SingleValueMap, &pairDelimiter, &keyValueDelimiter),
 		},
 	}
 }
@@ -70,8 +85,9 @@ func TestMapParsing(t *testing.T) {
 			"#1",
 			args{&MapConfig{},
 				map[string]string{
-					"SOURCE_LIST": "1 2 3 4 5",
-					"TARGET_LIST": "10 20 30 40 40",
+					"SOURCE_LIST":      "1 2 3 4 5",
+					"TARGET_LIST":      "10 20 30 40 40",
+					"SINGLE_VALUE_MAP": "key->value;key2->value2;key3->value3",
 				},
 				&MapConfig{
 					UniqueList: []string{"1", "2", "3", "4", "5"},
@@ -81,6 +97,11 @@ func TestMapParsing(t *testing.T) {
 						"3": "30",
 						"4": "40",
 						"5": "40",
+					},
+					SingleValueMap: map[string]string{
+						"key":  "value",
+						"key2": "value2",
+						"key3": "value3",
 					},
 				},
 			},
@@ -120,11 +141,12 @@ func TestMapParsing(t *testing.T) {
 			true,
 		},
 		{
-			"#3",
+			"#5",
 			args{&MapConfig{},
 				map[string]string{
-					"SOURCE_LIST": "1 2 3 4 5",
-					"TARGET_LIST": "1 2 3 4",
+					"SOURCE_LIST":      "1 2 3 4 5",
+					"TARGET_LIST":      "1 2 3 4 5",
+					"SINGLE_VALUE_MAP": "key->value;key->value2;key3->value3",
 				},
 				&MapConfig{},
 			},
