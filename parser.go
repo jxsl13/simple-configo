@@ -138,6 +138,56 @@ func DefaultParserListToSet(out *map[string]bool, delimiter *string) ParserFunc 
 	}
 }
 
+// DefaultParserUniqueList enforces that the passed list contains only unique values
+func DefaultParserUniqueList(out *[]string, delimiter *string) ParserFunc {
+	return func(value string) error {
+		list := strings.Split(value, *delimiter)
+
+		testMap := make(map[string]bool, len(list))
+		for _, key := range list {
+			testMap[key] = true
+		}
+
+		if len(list) != len(testMap) {
+			return fmt.Errorf("the list must contain only unique values, but has %d redundant values", len(list)-len(testMap))
+		}
+
+		*out = list
+		return nil
+	}
+}
+
+// DefaultParserMap fills the 'out' map with the keys and for each key the corresponding
+// value at the exact same position of the passed "value" string that is split into another
+// list is creates. keys{0, 1, 2, 3} -> values{0, 1, 2, 3}
+func DefaultParserMap(out *map[string]string, keys *[]string, delimiter *string) ParserFunc {
+	return func(value string) error {
+		values := strings.Split(value, *delimiter)
+
+		if len(values) != len(*keys) {
+			return fmt.Errorf("passed key slice(len=%d) has a different length than the parsed values list(len=%d)", len(*keys), len(values))
+		}
+
+		keySet := make(map[string]bool, len(*keys))
+		for _, key := range *keys {
+			keySet[key] = true
+		}
+
+		if len(keySet) != len(*keys) {
+			return fmt.Errorf("the passed key list must contain only unique keys, %d of %d keys are unique", len(keySet), len(*keys))
+		}
+
+		if *out == nil {
+			*out = make(map[string]string, len(*keys))
+		}
+
+		for idx, source := range *keys {
+			(*out)[source] = values[idx]
+		}
+		return nil
+	}
+}
+
 // DefaultParserChoiceString restricts the string value to a given set of values
 // that are passed with the 'allowed' parameter.
 func DefaultParserChoiceString(out *string, allowed ...string) ParserFunc {
