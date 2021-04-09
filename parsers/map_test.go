@@ -1,7 +1,10 @@
-package configo
+package parsers_test
 
 import (
 	"testing"
+
+	configo "github.com/jxsl13/simple-configo"
+	"github.com/jxsl13/simple-configo/parsers"
 )
 
 type MapConfig struct {
@@ -44,33 +47,33 @@ func (m *MapConfig) Name() string {
 	return "Map Config"
 }
 
-func (m *MapConfig) Options() Options {
+func (m *MapConfig) Options() configo.Options {
 	delimiter := " "
 	pairDelimiter := ";"
 	keyValueDelimiter := "->"
-	return Options{
+	return configo.Options{
 		{
 			Key:           "SOURCE_LIST",
 			Mandatory:     true,
 			Description:   "This is some description text.",
-			ParseFunction: DefaultParserUniqueList(&m.UniqueList, &delimiter),
+			ParseFunction: parsers.UniqueList(&m.UniqueList, &delimiter),
 		},
 		{
 			Key:           "TARGET_LIST",
 			Mandatory:     true,
 			Description:   "This is some description text.",
-			ParseFunction: DefaultParserMapFromKeysSlice(&m.Mapping, &m.UniqueList, &delimiter),
+			ParseFunction: parsers.MapFromKeysSlice(&m.Mapping, &m.UniqueList, &delimiter),
 		},
 		{
 			Key:           "SINGLE_VALUE_MAP",
 			Mandatory:     true,
 			Description:   "This is some description text.",
-			ParseFunction: DefaultParserMap(&m.SingleValueMap, &pairDelimiter, &keyValueDelimiter),
+			ParseFunction: parsers.Map(&m.SingleValueMap, &pairDelimiter, &keyValueDelimiter),
 		},
 	}
 }
 
-func TestMapParsing(t *testing.T) {
+func Test_MapParsing(t *testing.T) {
 	type args struct {
 		cfg    *MapConfig
 		env    map[string]string
@@ -157,7 +160,7 @@ func TestMapParsing(t *testing.T) {
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := Parse(tt.args.cfg, tt.args.env)
+			err := configo.Parse(tt.args.cfg, tt.args.env)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 			}

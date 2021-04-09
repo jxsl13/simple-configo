@@ -1,9 +1,12 @@
-package configo
+package configo_test
 
 import (
 	"encoding/json"
 	"testing"
 	"time"
+
+	configo "github.com/jxsl13/simple-configo"
+	"github.com/jxsl13/simple-configo/parsers"
 )
 
 type ErrorConfig struct {
@@ -14,13 +17,13 @@ func (ec *ErrorConfig) Name() string {
 	return "ErrorConfig"
 }
 
-func (ec *ErrorConfig) Options() Options {
-	optionsList := Options{
+func (ec *ErrorConfig) Options() configo.Options {
+	optionsList := configo.Options{
 		{
 			Key:           "SOME_FIELD",
 			Description:   "This is some description text.",
 			DefaultValue:  "SOME FIELD",
-			ParseFunction: DefaultParserInt(&ec.SomeField),
+			ParseFunction: parsers.Int(&ec.SomeField),
 		},
 	}
 
@@ -29,7 +32,7 @@ func (ec *ErrorConfig) Options() Options {
 
 func TestParseError(t *testing.T) {
 
-	err := Parse(&ErrorConfig{}, map[string]string{
+	err := configo.Parse(&ErrorConfig{}, map[string]string{
 		"SOME_FIELD": "12345",
 	})
 
@@ -47,13 +50,13 @@ func (ec *ErrorDefaultValuConfig) Name() string {
 	return "ErrorConfig"
 }
 
-func (ec *ErrorDefaultValuConfig) Options() Options {
-	optionsList := Options{
+func (ec *ErrorDefaultValuConfig) Options() configo.Options {
+	optionsList := configo.Options{
 		{
 			Key:           "SOME_FIELD",
 			Description:   "This is some description text.",
 			DefaultValue:  "2",
-			ParseFunction: DefaultParserBool(&ec.SomeField),
+			ParseFunction: parsers.Bool(&ec.SomeField),
 		},
 	}
 
@@ -62,7 +65,7 @@ func (ec *ErrorDefaultValuConfig) Options() Options {
 
 func TestParseDefaultValueError(t *testing.T) {
 
-	err := Parse(&ErrorDefaultValuConfig{}, map[string]string{})
+	err := configo.Parse(&ErrorDefaultValuConfig{}, map[string]string{})
 
 	if err == nil {
 		t.Errorf("Parse() EXPECTING ERROR, BUT GOT NONE!")
@@ -132,77 +135,77 @@ func (m *MyConfig) Name() (name string) {
 
 // Options returns a list of available options that can be configured for this
 // config object
-func (m *MyConfig) Options() (options Options) {
+func (m *MyConfig) Options() (options configo.Options) {
 
 	// NOTE: delimiter is parsed before the other values, this order is important,
 	// as the delimiter is used afterwards.
-	optionsList := Options{
+	optionsList := configo.Options{
 		{
 			Key:           "SOME_BOOL",
 			Mandatory:     true,
 			Description:   "This is some description text.",
 			DefaultValue:  "no",
-			ParseFunction: DefaultParserBool(&m.SomeBool),
+			ParseFunction: parsers.Bool(&m.SomeBool),
 		},
 		{
 			Key:           "SOME_INT",
 			Description:   "This is some description text.",
 			DefaultValue:  "42",
-			ParseFunction: DefaultParserInt(&m.SomeInt),
+			ParseFunction: parsers.Int(&m.SomeInt),
 		},
 		{
 			Key:           "SOME_FLOAT",
 			Description:   "This is some description text.",
 			DefaultValue:  "99.99",
-			ParseFunction: DefaultParserFloat(&m.SomeFloat, 64),
+			ParseFunction: parsers.Float(&m.SomeFloat, 64),
 		},
 		{
 			Key:           "SOME_DELIMITER",
 			Description:   "delimiter to split the lists below.",
 			DefaultValue:  " ",
-			ParseFunction: DefaultParserString(&m.SomeDelimiter),
+			ParseFunction: parsers.String(&m.SomeDelimiter),
 		},
 		{
 			Key:           "SOME_DURATION",
 			Description:   "This is some description text.",
 			DefaultValue:  "24h12m44s",
-			ParseFunction: DefaultParserDuration(&m.SomeDuration),
+			ParseFunction: parsers.Duration(&m.SomeDuration),
 		},
 		{
 			Key:           "SOME_LIST",
 			Description:   "Some IP list",
 			DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3",
-			ParseFunction: DefaultParserList(&m.SomeList, &m.SomeDelimiter),
+			ParseFunction: parsers.List(&m.SomeList, &m.SomeDelimiter),
 		},
 		{
 			Key:           "SOME_SET",
 			Description:   "This is some description text.",
 			DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3 127.0.0.1",
-			ParseFunction: DefaultParserListToSet(&m.SomeStringSet, &m.SomeDelimiter),
+			ParseFunction: parsers.ListToSet(&m.SomeStringSet, &m.SomeDelimiter),
 		},
 		{
 			Key:           "SOME_CHOICE_INT",
 			Description:   "This is some description text.",
 			DefaultValue:  "4",
-			ParseFunction: DefaultParserChoiceInt(&m.SomeChoiceInt, 1, 2, 3, 4, 5, 6),
+			ParseFunction: parsers.ChoiceInt(&m.SomeChoiceInt, 1, 2, 3, 4, 5, 6),
 		},
 		{
 			Key:           "SOME_CHOICE_FLOAT",
 			Description:   "This is some description text.",
 			DefaultValue:  "5.5",
-			ParseFunction: DefaultParserChoiceFloat(&m.SomeChoiceFloat, 64, 1.1, 2.2, 3.3, 4.4, 5.5),
+			ParseFunction: parsers.ChoiceFloat(&m.SomeChoiceFloat, 64, 1.1, 2.2, 3.3, 4.4, 5.5),
 		},
 		{
 			Key:           "SOME_CHOICE_STRING",
 			Description:   "This is some description text.",
 			DefaultValue:  "empty",
-			ParseFunction: DefaultParserChoiceString(&m.SomeChoiceString, "empty", "full", "half empty"),
+			ParseFunction: parsers.ChoiceString(&m.SomeChoiceString, "empty", "full", "half empty"),
 		},
 		{
 			Key:           "SOME_RANGE_INT",
 			Description:   "This is some description text.",
 			DefaultValue:  "42",
-			ParseFunction: DefaultParserRangesInt(&m.SomeRangeInt, 0, 99),
+			ParseFunction: parsers.RangesInt(&m.SomeRangeInt, 0, 99),
 		},
 	}
 
@@ -215,7 +218,7 @@ func (m *MyConfig) Options() (options Options) {
 	return optionsList
 }
 
-func TestParse(t *testing.T) {
+func Test_Parse(t *testing.T) {
 	type args struct {
 		cfg    *MyConfig
 		env    map[string]string
@@ -373,7 +376,7 @@ func TestParse(t *testing.T) {
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := Parse(tt.args.cfg, tt.args.env)
+			err := configo.Parse(tt.args.cfg, tt.args.env)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -397,19 +400,19 @@ func (m *MandatoryConfig) Name() string {
 	return "Mandatory Config"
 }
 
-func (m *MandatoryConfig) Options() Options {
-	return Options{
+func (m *MandatoryConfig) Options() configo.Options {
+	return configo.Options{
 		{
 			Key:           "MANDATORY_REGEX",
 			Mandatory:     true,
 			Description:   "This is some description text.",
 			DefaultValue:  "mandatory",
-			ParseFunction: DefaultParserRegex(&m.MandatoryRegex, "[a-z]+", "must only contain a-z"),
+			ParseFunction: parsers.Regex(&m.MandatoryRegex, "[a-z]+", "must only contain a-z"),
 		},
 	}
 }
 
-func TestMandatoryParse(t *testing.T) {
+func Test_MandatoryParse(t *testing.T) {
 	type args struct {
 		cfg    *MandatoryConfig
 		env    map[string]string
@@ -434,7 +437,7 @@ func TestMandatoryParse(t *testing.T) {
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := Parse(tt.args.cfg, tt.args.env)
+			err := configo.Parse(tt.args.cfg, tt.args.env)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -458,19 +461,19 @@ func (m *InvalidMandatoryConfig) Name() string {
 	return "Mandatory Config"
 }
 
-func (m *InvalidMandatoryConfig) Options() Options {
-	return Options{
+func (m *InvalidMandatoryConfig) Options() configo.Options {
+	return configo.Options{
 		{
 			Key:           "MANDATORY_REGEX",
 			Mandatory:     true,
 			Description:   "This is some description text.",
 			DefaultValue:  "15", // Configuration definition is invalid at this point
-			ParseFunction: DefaultParserRegex(&m.MandatoryRegex, "[a-z]+", "must only contain a-z"),
+			ParseFunction: parsers.Regex(&m.MandatoryRegex, "[a-z]+", "must only contain a-z"),
 		},
 	}
 }
 
-func TestInvalidMandatoryParse(t *testing.T) {
+func Test_InvalidMandatoryParse(t *testing.T) {
 	type args struct {
 		cfg    *InvalidMandatoryConfig
 		env    map[string]string
@@ -491,7 +494,7 @@ func TestInvalidMandatoryParse(t *testing.T) {
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := Parse(tt.args.cfg, tt.args.env)
+			err := configo.Parse(tt.args.cfg, tt.args.env)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -515,13 +518,13 @@ func (m *EmptyMandatoryConfig) Name() string {
 	return "Mandatory Config"
 }
 
-func (m *EmptyMandatoryConfig) Options() Options {
-	return Options{
+func (m *EmptyMandatoryConfig) Options() configo.Options {
+	return configo.Options{
 		{
 			Key:           "MANDATORY_REGEX",
 			Mandatory:     true,
 			Description:   "This is some description text.",
-			ParseFunction: DefaultParserRegex(&m.MandatoryRegex, "[a-z]+", "must only contain a-z"),
+			ParseFunction: parsers.Regex(&m.MandatoryRegex, "[a-z]+", "must only contain a-z"),
 		},
 	}
 }
@@ -552,7 +555,7 @@ func TestEmptyMandatoryParse(t *testing.T) {
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := Parse(tt.args.cfg, tt.args.env)
+			err := configo.Parse(tt.args.cfg, tt.args.env)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -576,14 +579,14 @@ func (m *InvalidDefaultValueConfig) Name() string {
 	return "Mandatory Config"
 }
 
-func (m *InvalidDefaultValueConfig) Options() Options {
-	return Options{
+func (m *InvalidDefaultValueConfig) Options() configo.Options {
+	return configo.Options{
 		{
 			Key:           "MANDATORY_REGEX",
 			Mandatory:     true,
 			Description:   "This is some description text.",
 			DefaultValue:  "15",
-			ParseFunction: DefaultParserRegex(&m.MandatoryRegex, "[a-z]+", "must only contain a-z"),
+			ParseFunction: parsers.Regex(&m.MandatoryRegex, "[a-z]+", "must only contain a-z"),
 		},
 	}
 }
@@ -614,7 +617,7 @@ func TestInvalidDefaultValueParse(t *testing.T) {
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := Parse(tt.args.cfg, tt.args.env)
+			err := configo.Parse(tt.args.cfg, tt.args.env)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 			}

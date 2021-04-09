@@ -1,4 +1,4 @@
-package configo
+package parsers
 
 import "sort"
 
