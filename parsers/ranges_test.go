@@ -40,7 +40,7 @@ func Test_IntRange_Contains(t *testing.T) {
 	}
 }
 
-func Test_dDistinctRangeListInt_Contains(t *testing.T) {
+func Test_DistinctRangeListInt_Contains(t *testing.T) {
 	type args struct {
 		i int
 	}
