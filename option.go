@@ -9,13 +9,13 @@ import (
 var (
 
 	// ErrOptionMissingKey The option is missing the 'Key' field
-	ErrOptionMissingKey = errors.New("The option is missing the 'Key' field")
+	ErrOptionMissingKey = errors.New("the option is missing the 'Key' field")
 	// ErrOptionMissingDescription The option is missing the 'Description' field
-	ErrOptionMissingDescription = errors.New("The option is missing the 'Description' field")
-	// ErrOptionInvalidDefaultValue The option has an invalid 'DefaultValue' field, please check its 'type' field
-	ErrOptionInvalidDefaultValue = errors.New("The option has an invalid 'DefaultValue' field")
-	// ErrOptionMissingParseFunction The option is missing its 'ParseFunc' field
-	ErrOptionMissingParseFunction = errors.New("The option is missing its 'ParseFunc' field")
+	ErrOptionMissingDescription = errors.New("the option is missing the 'Description' field")
+	// ErrOptionInvalidDefaultValue the option has an invalid 'DefaultValue' field, please check its 'type' field
+	ErrOptionInvalidDefaultValue = errors.New("the option has an invalid 'DefaultValue' field")
+	// ErrOptionMissingParseFunction the option is missing its 'ParseFunc' field
+	ErrOptionMissingParseFunction = errors.New("the option is missing its 'ParseFunc' field")
 )
 
 // Option is a value that can be set to configure
@@ -67,7 +67,7 @@ func (o *Option) IsValid() error {
 // panics if the programmer did a mistake
 func (o *Option) MustValid() {
 	if err := o.IsValid(); err != nil {
-		panic(fmt.Sprintf("Error: %s : %v", o.Key, err))
+		panic(fmt.Sprintf("error: %s : %v", o.Key, err))
 	}
 }
 
