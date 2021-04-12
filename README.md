@@ -30,6 +30,7 @@ import (
     "time"
 
     configo "github.com/jxsl13/simple-configo"
+    "github.com/jxsl13/simple-configo/parsers"
 )
 
 // MyConfig is a custom configuration that I want to use.
@@ -60,43 +61,43 @@ func (m *MyConfig) Options() (options configo.Options) {
             Mandatory:     true,
             Description:   "This is some description text.",
             DefaultValue:  "no",
-            ParseFunction: configo.DefaultParserBool(&m.SomeBool),
+            ParseFunction: parsers.Bool(&m.SomeBool),
         },
         {
             Key:           "SOME_INT",
             Description:   "This is some description text.",
             DefaultValue:  "42",
-            ParseFunction: configo.DefaultParserInt(&m.SomeInt),
+            ParseFunction: parsers.Int(&m.SomeInt),
         },
         {
             Key:           "SOME_FLOAT",
             Description:   "This is some description text.",
             DefaultValue:  "99.99",
-            ParseFunction: configo.DefaultParserFloat(&m.SomeFloat, 64),
+            ParseFunction: parsers.Float(&m.SomeFloat, 64),
         },
         {
             Key:           "SOME_DELIMITER",
             Description:   "delimiter to split the lists below.",
             DefaultValue:  " ",
-            ParseFunction: configo.DefaultParserString(&m.SomeDelimiter),
+            ParseFunction: parsers.String(&m.SomeDelimiter),
         },
         {
             Key:           "SOME_DURATION",
             Description:   "This is some description text.",
             DefaultValue:  "24h12m44s",
-            ParseFunction: configo.DefaultParserDuration(&m.SomeDuration),
+            ParseFunction: parsers.Duration(&m.SomeDuration),
         },
         {
             Key:           "SOME_LIST",
             Description:   "Some IP list",
             DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3",
-            ParseFunction: configo.DefaultParserList(&m.SomeList, &m.SomeDelimiter),
+            ParseFunction: parsers.List(&m.SomeList, &m.SomeDelimiter),
         },
         {
             Key:           "SOME_SET",
             Description:   "This is some description text.",
             DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3 127.0.0.1",
-            ParseFunction: configo.DefaultParserListToSet(&m.SomeStringSet, &m.SomeDelimiter),
+            ParseFunction: parsers.ListToSet(&m.SomeStringSet, &m.SomeDelimiter),
         },
     }
 
@@ -141,4 +142,4 @@ This is everything you need to write in order to parse a configuration file with
 
 ## TODO
 
-- Create DefaultParserWrapperXXX(f ParserFunc) (g ParserFunc) functions that may wrap those functions howewer they want?
+- Create parsers.WrapperXXX(f ParserFunc) (g ParserFunc) functions that may wrap those functions howewer they want?
