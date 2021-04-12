@@ -44,9 +44,15 @@ func loadOrPromptPassword(promptPrefix, filePath string, perm ...fs.FileMode) (s
 	return text, nil
 }
 
-// parses a base64 encoded secret and puts the raw value into the *out parameter
+// PromptPassword prompts the user for the password in case the to be parsed map value does not contain
+// any string data, meaning the user is only prompted when the e.g. environment variable doe snot exist or is empty.
 func PromptPassword(out *string, promptPrefix string) configo.ParserFunc {
 	return func(value string) error {
+		if value != "" {
+			*out = value
+			return nil
+		}
+
 		password, err := promptPassword(promptPrefix)
 		if err != nil {
 			return err
@@ -56,7 +62,7 @@ func PromptPassword(out *string, promptPrefix string) configo.ParserFunc {
 	}
 }
 
-// LoadOrPromptPasswordParser tries to load the passed file and extract its string content or prompts the user in the shell
+// LoadOrPromptPassword tries to load the passed file and extract its string content or prompts the user in the shell
 // for entering their password (invisible) and then saves it to the passed file.
 func LoadOrPromptPassword(out *string, promptPrefix string, filePath *string, perm ...fs.FileMode) configo.ParserFunc {
 	return func(value string) error {
@@ -91,15 +97,23 @@ func promptText(linePrefix string) string {
 	return scanner.Text()
 }
 
-// parses a base64 encoded secret and puts the raw value into the *out parameter
+// PromptText prompts the user to enter a text. This only prompts the user in the case that
+// the corresponding environment variable doe snot contain any string data.
 func PromptText(out *string, promptPrefix string) configo.ParserFunc {
 	return func(value string) error {
+		if value != "" {
+			*out = value
+			return nil
+		}
+
 		text := promptText(promptPrefix)
 		*out = text
 		return nil
 	}
 }
 
+// LoadOrPromtps either loads the content of the filePath and sets the string value to the file's content or die prompt the user to enter
+// the data and then saves the result in the specified file.
 func LoadOrPromptText(out *string, promptPrefix string, filePath *string, perm ...fs.FileMode) configo.ParserFunc {
 	return func(value string) error {
 		text, err := loadOrPromptText(promptPrefix, *filePath, perm...)

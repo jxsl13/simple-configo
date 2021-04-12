@@ -33,6 +33,7 @@ var (
 // IsPseudoOption is an option that does not necessary relate to any actual Key value in any configuration map but does actually just do
 // some operation that relies on previously computed config values e.g. the construction of a file path that
 // needs a previously configured and evaluated directory path and some filename in order to construct that path.
+// INFO: A pseudo option enforces the execution of the parsing function, even if the corresponding key doe snot exist in e.g. the environment.
 type Option struct {
 	Key            string
 	Description    string
