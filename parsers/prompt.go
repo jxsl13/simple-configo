@@ -54,6 +54,7 @@ func PromptPassword(out *string, promptPrefix string) configo.ParserFunc {
 		}
 
 		password, err := promptPassword(promptPrefix)
+		fmt.Print("\n")
 		if err != nil {
 			return err
 		}
@@ -112,7 +113,7 @@ func PromptText(out *string, promptPrefix string) configo.ParserFunc {
 	}
 }
 
-// LoadOrPromtps either loads the content of the filePath and sets the string value to the file's content or die prompt the user to enter
+// LoadOrPromptText either loads the content of the filePath and sets the string value to the file's content or die prompt the user to enter
 // the data and then saves the result in the specified file.
 func LoadOrPromptText(out *string, promptPrefix string, filePath *string, perm ...fs.FileMode) configo.ParserFunc {
 	return func(value string) error {
