@@ -1,10 +1,11 @@
-package parsers
+package parsers_test
 
 import (
 	"errors"
 	"testing"
 
 	configo "github.com/jxsl13/simple-configo"
+	"github.com/jxsl13/simple-configo/parsers"
 )
 
 func errParser(value string) error {
@@ -29,37 +30,37 @@ func (s *testCfg) Options() configo.Options {
 		{
 			Key:            "#0",
 			IsPseudoOption: true,
-			ParseFunction:  Xor(errParser, errParser, nilParser, errParser),
+			ParseFunction:  parsers.Xor(errParser, errParser, nilParser, errParser),
 		},
 		{
 			Key:            "#1",
 			IsPseudoOption: true,
-			ParseFunction:  Or(errParser, errParser, nilParser, errParser),
+			ParseFunction:  parsers.Or(errParser, errParser, nilParser, errParser),
 		},
 		{
 			Key:            "#2",
 			IsPseudoOption: true,
-			ParseFunction:  Or(errParser, nilParser),
+			ParseFunction:  parsers.Or(errParser, nilParser),
 		},
 		{
 			Key:            "#3",
 			IsPseudoOption: true,
-			ParseFunction:  And(nilParser, nilParser),
+			ParseFunction:  parsers.And(nilParser, nilParser),
 		},
 		{
 			Key:            "#4",
 			IsPseudoOption: true,
-			ParseFunction:  And(errParser, nilParser),
+			ParseFunction:  parsers.And(errParser, nilParser),
 		},
 		{
 			Key:            "#5",
 			IsPseudoOption: true,
-			ParseFunction:  Or(errParser, errParser),
+			ParseFunction:  parsers.Or(errParser, errParser),
 		},
 		{
 			Key:            "#6",
 			IsPseudoOption: true,
-			ParseFunction:  Xor(errParser, errParser, nilParser, errParser, nilParser, errParser, errParser),
+			ParseFunction:  parsers.Xor(errParser, errParser, nilParser, errParser, nilParser, errParser, errParser),
 		},
 	}[s.Start:s.End]
 }
