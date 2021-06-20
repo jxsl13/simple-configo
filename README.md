@@ -1,5 +1,7 @@
 # Simple-Configo
 
+[![Test](https://github.com/jxsl13/simple-configo/actions/workflows/build.yaml/badge.svg)](https://github.com/jxsl13/simple-configo/actions/workflows/build.yaml) [![Go Report Card](https://goreportcard.com/badge/github.com/jxsl13/simple-configo)](https://goreportcard.com/report/github.com/jxsl13/simple-configo) [![codecov](https://codecov.io/gh/jxsl13/simple-configo/branch/master/graph/badge.svg?token=noNR6ork0u)](https://codecov.io/gh/jxsl13/simple-configo) [![Total alerts](https://img.shields.io/lgtm/alerts/g/jxsl13/simple-configo.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jxsl13/simple-configo/alerts/) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 Simple-Configo streamlines the creation of multiple independent configuration structs to the implementation of a single interface, the `Config` interface, that has only two methods.
 
 ```go
