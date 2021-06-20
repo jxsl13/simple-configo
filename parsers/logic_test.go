@@ -49,23 +49,41 @@ func (s *testCfg) Options() configo.Options {
 		{
 			Key:            "#4",
 			IsPseudoOption: true,
-			ParseFunction:  And(errParser, nilParser), // TODO: this should actually return an error
+			ParseFunction:  And(errParser, nilParser),
+		},
+		{
+			Key:            "#5",
+			IsPseudoOption: true,
+			ParseFunction:  Or(errParser, errParser),
+		},
+		{
+			Key:            "#6",
+			IsPseudoOption: true,
+			ParseFunction:  Xor(errParser, errParser, nilParser, errParser, nilParser, errParser, errParser),
 		},
 	}[s.Start:s.End]
 }
 
 func TestLogic(t *testing.T) {
+	// pseudo values
+	var env map[string]string = make(map[string]string)
+	// for i := 0; i < 1000; i++ {
+	// 	env[fmt.Sprintf("#%d", i)] = "#value"
+	// }
 
 	tests := []struct {
 		name    string
 		cfg     configo.Config
 		wantErr bool
 	}{
-		{"#1", &testCfg{0, 3}, false},
+		{"#1", &testCfg{0, 4}, false},
+		{"#2", &testCfg{4, 5}, true},
+		{"#3", &testCfg{5, 6}, true},
+		{"#4", &testCfg{6, 7}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := configo.Parse(tt.cfg, map[string]string{})
+			err := configo.Parse(tt.cfg, env)
 			if tt.wantErr && err == nil || !tt.wantErr && err != nil {
 				t.Errorf("Want Error: %v, got: %v\n", tt.wantErr, err)
 			}
