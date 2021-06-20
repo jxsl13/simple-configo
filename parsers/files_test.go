@@ -6,7 +6,6 @@ import (
 	"os"
 	"reflect"
 	"testing"
-	"time"
 
 	configo "github.com/jxsl13/simple-configo"
 	"github.com/jxsl13/simple-configo/parsers"
@@ -19,7 +18,6 @@ func TestReadYAML(t *testing.T) {
 	cfg := yamlCfg{
 		FilePath: fileName,
 		Initial: yamlStruct{
-			time.Now().Truncate(time.Millisecond),
 			10,
 			"test_string",
 		},
@@ -50,7 +48,6 @@ func TestReadYAML(t *testing.T) {
 }
 
 type yamlStruct struct {
-	Date   time.Time
 	Num    int
 	String string
 }
@@ -82,7 +79,6 @@ func TestReadJSON(t *testing.T) {
 	cfg := jsonCfg{
 		FilePath: fileName,
 		Initial: jsonStruct{
-			time.Now().Round(time.Millisecond),
 			10,
 			"test_string",
 		},
@@ -113,7 +109,6 @@ func TestReadJSON(t *testing.T) {
 }
 
 type jsonStruct struct {
-	Date   time.Time
 	Num    int
 	String string
 }
