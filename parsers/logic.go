@@ -10,7 +10,7 @@ import (
 // error formatting
 func fmtErr(prefix string, errs []error) error {
 	// format errors
-	cErr := errors.New("could not parse: ")
+	cErr := errors.New(prefix)
 	for _, err := range errs {
 		cErr = fmt.Errorf("%w\n -%v", cErr, err)
 	}
