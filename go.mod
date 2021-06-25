@@ -9,5 +9,7 @@ require (
 
 replace (
 	github.com/jxsl13/simple-configo => ./
+	github.com/jxsl13/simple-configo/internal => ./internal/
 	github.com/jxsl13/simple-configo/parsers => ./parsers/
+	github.com/jxsl13/simple-configo/unparsers => ./unparsers/
 )

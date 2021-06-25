@@ -6,3 +6,7 @@ package configo
 // This function is kept as simple as possible, in order to be handled exactly the same way for every
 // possible return value
 type ParserFunc func(value string) error
+
+// UnparserFunc through another function that provides a reference to the actual configuration value.
+// Contrary to the ParserFunc it does provide the key as well as the value of the parent option.
+type UnparserFunc func(key, value string) error

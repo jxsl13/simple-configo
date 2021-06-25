@@ -7,6 +7,7 @@ import (
 	"os"
 
 	configo "github.com/jxsl13/simple-configo"
+	"github.com/jxsl13/simple-configo/internal"
 	"golang.org/x/term"
 )
 
@@ -28,7 +29,7 @@ func promptPassword(linePrefix string) (string, error) {
 
 // loads or prompts and saves password
 func loadOrPromptPassword(promptPrefix, filePath string, perm ...fs.FileMode) (string, error) {
-	text, err := load(filePath)
+	text, err := internal.Load(filePath)
 	if err == nil {
 		return text, nil
 	}
@@ -37,7 +38,7 @@ func loadOrPromptPassword(promptPrefix, filePath string, perm ...fs.FileMode) (s
 	if err != nil {
 		return "", err
 	}
-	err = save(text, filePath, perm...)
+	err = internal.Save(text, filePath, perm...)
 	if err != nil {
 		return "", err
 	}
@@ -78,13 +79,13 @@ func LoadOrPromptPassword(out *string, promptPrefix string, filePath *string, pe
 
 // loads or prompts and saves password
 func loadOrPromptText(promptPrefix, filePath string, perm ...fs.FileMode) (string, error) {
-	text, err := load(filePath)
+	text, err := internal.Load(filePath)
 	if err == nil {
 		return text, nil
 	}
 	// could not load
 	text = promptText(promptPrefix)
-	err = save(text, filePath, perm...)
+	err = internal.Save(text, filePath, perm...)
 	if err != nil {
 		return "", err
 	}

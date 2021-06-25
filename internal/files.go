@@ -1,4 +1,4 @@
-package parsers
+package internal
 
 import (
 	"io/fs"
@@ -8,7 +8,7 @@ import (
 )
 
 // Exists reports whether the named file or directory exists.
-func exists(filePath string) bool {
+func Exists(filePath string) bool {
 	if _, err := os.Stat(filePath); err != nil {
 		if os.IsNotExist(err) {
 			return false
@@ -18,14 +18,14 @@ func exists(filePath string) bool {
 }
 
 // Save allows to save the text at a given filePath
-func save(text, filePath string, perm ...fs.FileMode) error {
+func Save(text, filePath string, perm ...fs.FileMode) error {
 	var mode fs.FileMode = 0600
 	if len(perm) > 0 {
 		mode = perm[0]
 	}
 	dirPath := path.Dir(filePath)
 
-	if !exists(filePath) {
+	if !Exists(filePath) {
 		if err := os.MkdirAll(dirPath, mode); err != nil {
 			return err
 		}
@@ -36,7 +36,7 @@ func save(text, filePath string, perm ...fs.FileMode) error {
 
 // Load allows to load a text from a given filePath that points to a file
 // which contains the text
-func load(filePath string) (text string, err error) {
+func Load(filePath string) (text string, err error) {
 	b, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return "", err

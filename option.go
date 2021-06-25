@@ -30,17 +30,21 @@ var (
 // The ParseFunction heavily relies on side effects, as it does only return the error in case the parsing failed.
 // Usually the pattern is followed where another function gets parameters or struct property references passed and returns a ParseFunc
 // that modifies the parameters that were passed to the parent function which returns the ParseFunc.
+// The UnparseFunction allows to do the opposite of the ParseFunvction. It is called once your application shuts down.
+// This way you may serialize previously deserialized values back into a file, set environment variables,
+// close client connections, and so on.
 // IsPseudoOption is an option that does not necessary relate to any actual Key value in any configuration map but does actually just do
 // some operation that relies on previously computed config values e.g. the construction of a file path that
 // needs a previously configured and evaluated directory path and some filename in order to construct that path.
-// INFO: A pseudo option enforces the execution of the parsing function, even if the corresponding key doe snot exist in e.g. the environment.
+// INFO: A pseudo option enforces the execution of the parsing function, even if the corresponding key does not exist in e.g. the environment.
 type Option struct {
-	Key            string
-	Description    string
-	Mandatory      bool
-	DefaultValue   string
-	ParseFunction  ParserFunc
-	IsPseudoOption bool
+	Key             string
+	Description     string
+	Mandatory       bool
+	DefaultValue    string
+	ParseFunction   ParserFunc
+	UnparseFunction UnparserFunc
+	IsPseudoOption  bool
 }
 
 // IsValid retrurns true if there are no programming errors
@@ -52,6 +56,10 @@ func (o *Option) IsValid() error {
 
 	if o.Description == "" && !o.IsPseudoOption {
 		return ErrOptionMissingDescription
+	}
+
+	if o.ParseFunction == nil {
+		return ErrOptionMissingParseFunction
 	}
 
 	if (o.DefaultValue != "" || !o.Mandatory) && !o.IsPseudoOption {
