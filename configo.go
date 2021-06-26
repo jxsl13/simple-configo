@@ -15,8 +15,11 @@ type Config interface {
 // Parse the passed envoronment map into the config struct.
 // Every Config defines, how its Options look like and how those are parsed.
 func Parse(cfg Config, env map[string]string) error {
+	return parse(cfg.Options(), env)
+}
 
-	options := cfg.Options()
+// for internal usage in order not to call cfg.Options() multiple times.
+func parse(options Options, env map[string]string) error {
 	for _, opt := range options {
 
 		// Initially the config values are set to the default value, if the default value is valid
@@ -46,4 +49,21 @@ func Parse(cfg Config, env map[string]string) error {
 	}
 
 	return nil
+}
+
+// ParseWithUnparse parses the configuration the same way as the 'Parse' function and
+// initializes the shutdown hooks that are defined in the configuration's options.
+// The returned function is a blocking function that can be used in a 'defer unparse()' context where
+// the function blocks until the application received any of the defined shutdown signals.
+// once the signals are received, the function stops blocking and starts to execute the
+// UnparseFunctions of all of the defined Options in REVERSE order of their occurrance in the Options array.
+// One may also handle any errors that the returned function returns upon invokation.
+func ParseWithUnparse(cfg Config, env map[string]string) (func() error, error) {
+	// only call this function once in order not to cause any side effects wheh calling it again.
+	options := cfg.Options()
+
+	if err := parse(options, env); err != nil {
+		return nil, err
+	}
+	return unparse(options, env), nil
 }
