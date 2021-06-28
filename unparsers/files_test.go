@@ -106,6 +106,7 @@ func TestWriteYAML(t *testing.T) {
 		t.Fatalf("got: %v want: %v\n", cfg.Test, test)
 	}
 
+	internal.Delete(fileName)
 	unparse := configo.Unparse(cfg, env)
 	unparse()
 
@@ -144,6 +145,45 @@ func TestWriteJSON(t *testing.T) {
 		t.Fatalf("got: %v want: %v\n", cfg.Test, test)
 	}
 
+	internal.Delete(fileName)
+	unparse := configo.Unparse(cfg, env)
+	unparse()
+
+	err = configo.Parse(cfg2, env)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(cfg, cfg2) {
+		t.Fatalf("got: %v want: %v\n", cfg, cfg2)
+	}
+}
+
+func TestWriteFile(t *testing.T) {
+
+	testString := "testString=1234"
+	err := unparsers.WriteFile(&testString)("File", fileName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer internal.Delete(fileName)
+
+	cfg := &TestConfig{
+		Index: 2,
+	}
+
+	cfg2 := &TestConfig{
+		Index: 2,
+	}
+	err = configo.Parse(cfg, env)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(cfg.Test.String, testString) {
+		t.Fatalf("got: %v want: %v\n", cfg.Test.String, testString)
+	}
+
+	internal.Delete(fileName)
 	unparse := configo.Unparse(cfg, env)
 	unparse()
 
