@@ -119,6 +119,9 @@ func (jl *jobList) ExecuteJobs() error {
 		}
 	}
 
+	// reset joblist
+	jl.jobs = jl.jobs[:0]
+
 	// multi line error
 	if len(errs) > 0 {
 		return constructErr(errs)
