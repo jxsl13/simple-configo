@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/signal"
 	"strings"
 	"sync"
 )
@@ -35,16 +34,8 @@ func unparse(options Options, env map[string]string) func() error {
 
 	// initialization
 	initOnce.Do(func() {
-		// initialize synchronization channel
-		shutdownChan = make(chan os.Signal)
-
-		// register shutdown signals
-		signal.Notify(shutdownChan, ShutdownSignalListFunc()...)
-
 		// blocking function that awaits the closing of the channel
 		shutdownAwaitFunc = func() error {
-			// await shutdown signal
-			<-shutdownChan
 
 			// do the actual parsing
 			if err := shutdownJobs.ExecuteJobs(); err != nil {
@@ -120,7 +111,7 @@ func (jl *jobList) ExecuteJobs() error {
 
 	errs := make([]error, 0)
 	// execute jobs in reverse
-	for i := len(jl.jobs); i >= 0; i-- {
+	for i := len(jl.jobs) - 1; i >= 0; i-- {
 		job := jl.jobs[i]
 		if err := job.Execute(); err != nil {
 			// job implements the error interface
