@@ -44,3 +44,13 @@ func Load(filePath string) (text string, err error) {
 
 	return string(b), nil
 }
+
+// Deletechecks if the given filePath exists. In case is does exist,the file is deleted.
+// In case it doe sexist and it is a directory, the path and all of its children are deleted.
+// In case the path does not exist, this function returnsan os.ErrNotExist error.
+func Delete(filePath string) (err error) {
+	if !Exists(filePath) {
+		return os.ErrNotExist
+	}
+	return os.RemoveAll(filePath)
+}
