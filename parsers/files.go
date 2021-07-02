@@ -2,6 +2,7 @@ package parsers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/joho/godotenv"
@@ -30,16 +31,18 @@ func ReadDotEnvFileMulti(outTuples ...DotEnvTuple) configo.ParserFunc {
 			return err
 		}
 		for _, tuple := range outTuples {
-			keyPtr := tuple.KeyPtr
 			key := tuple.Key
-			outPtr := tuple.OutValuePtr
-
-			if keyPtr != nil {
-				*outPtr = env[*keyPtr]
-			} else {
-				// set out to expected value, will be empty in case the value was not found.
-				*outPtr = env[key]
+			if tuple.KeyPtr != nil {
+				key = *tuple.KeyPtr
 			}
+
+			outPtr := tuple.OutValuePtr
+			result, found := env[key]
+			if !found {
+				return fmt.Errorf("%s not found in file %s", key, filePath)
+			}
+
+			*outPtr = result
 		}
 
 		return nil
