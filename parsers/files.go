@@ -2,7 +2,6 @@ package parsers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 
 	"github.com/joho/godotenv"
@@ -10,57 +9,33 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-//DotEnvTuple is used as a bridging struct that connects Keys found in a .env file and the corresponding destination values
-// where the values of these keys are written into.
-type DotEnvTuple struct {
-	// Key .env -> USERNAME=xxx, username is the key
-	Key string
-	// KeyPtr is the dynamic version of the key that might be used to change the Key at runtime.
-	KeyPtr *string
-	//OutValuePtr is the target string variable that receives the value parsed from the .env file.
-	OutValuePtr *string
-}
-
-// ReadDotEnvFileMulti reads the provided file and sets the DotEnvTuple.Value variable to the value found in the .env file
-// under the DotEnvTuple.Key.
-func ReadDotEnvFileMulti(outTuples ...DotEnvTuple) configo.ParserFunc {
+// ReadDotEnvFileMulti is basically the ability to use the whole of simple configo
+// in a nested way for .env files as a single ParseFunc inside of a higher level
+// Option.
+func ReadDotEnvFileMulti(options ...configo.Option) configo.ParserFunc {
 	return func(filePath string) error {
-
 		env, err := godotenv.Read(filePath)
 		if err != nil {
 			return err
 		}
-		for _, tuple := range outTuples {
-			key := tuple.Key
-			if tuple.KeyPtr != nil {
-				key = *tuple.KeyPtr
-			}
-
-			outPtr := tuple.OutValuePtr
-			result, found := env[key]
-			if !found {
-				return fmt.Errorf("%s not found in file %s", key, filePath)
-			}
-
-			*outPtr = result
-		}
-
-		return nil
+		return configo.ParseOptions(options, env)
 	}
 }
 
-// ReadDotEnvFileMulti reads the provided file and sets the DotEnvTuple.Value variable to the value found in the .env file
-// under the DotEnvTuple.Key.
+// ReadDotEnvFileMap expects all of the provided keys to exist in the .env file
+// those keys are associated with their output string pointers that are filled with the key's values
+// upon parsing of the file.
 func ReadDotEnvFileMap(outMap map[string]*string) configo.ParserFunc {
 	return func(filePath string) error {
-		tuples := make([]DotEnvTuple, 0, len(outMap))
+		options := make(configo.Options, 0, len(outMap))
 		for key, outPtr := range outMap {
-			tuples = append(tuples, DotEnvTuple{
-				Key:         key,
-				OutValuePtr: outPtr,
+			options = append(options, configo.Option{
+				Key:           key,
+				Mandatory:     true,
+				ParseFunction: String(outPtr),
 			})
 		}
-		f := ReadDotEnvFileMulti(tuples...)
+		f := ReadDotEnvFileMulti(options...)
 		return f(filePath)
 	}
 }
@@ -71,9 +46,9 @@ func ReadDotEnvFileMap(outMap map[string]*string) configo.ParserFunc {
 // or the slightly more complex version: ReadDotEnvFileMulti
 func ReadDotEnvFile(out *string, key string) configo.ParserFunc {
 	return func(filePath string) error {
-		f := ReadDotEnvFileMulti(DotEnvTuple{
-			Key:         key,
-			OutValuePtr: out,
+		f := ReadDotEnvFileMulti(configo.Option{
+			Key:           key,
+			ParseFunction: String(out),
 		})
 		return f(filePath)
 	}

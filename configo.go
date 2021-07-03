@@ -1,6 +1,8 @@
 package configo
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Config is an interface that implements only two methods.
 // The first method simply returns the name of the configuration.
@@ -15,11 +17,11 @@ type Config interface {
 // Parse the passed envoronment map into the config struct.
 // Every Config defines, how its Options look like and how those are parsed.
 func Parse(cfg Config, env map[string]string) error {
-	return parse(cfg.Options(), env)
+	return ParseOptions(cfg.Options(), env)
 }
 
 // for internal usage in order not to call cfg.Options() multiple times.
-func parse(options Options, env map[string]string) error {
+func ParseOptions(options Options, env map[string]string) error {
 	for _, opt := range options {
 
 		// Initially the config values are set to the default value, if the default value is valid
@@ -62,7 +64,7 @@ func ParseWithUnparse(cfg Config, env map[string]string) (func() error, error) {
 	// only call this function once in order not to cause any side effects wheh calling it again.
 	options := cfg.Options()
 
-	if err := parse(options, env); err != nil {
+	if err := ParseOptions(options, env); err != nil {
 		return nil, err
 	}
 	return unparse(options, env), nil
