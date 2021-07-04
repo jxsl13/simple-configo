@@ -20,12 +20,22 @@ func GetEnv() map[string]string {
 	return env
 }
 
-// ReadEnvFile allows to read the env map from a key value file
-// File content: key=value
-func ReadEnvFile(filePaths ...string) (map[string]string, error) {
-	return godotenv.Read(filePaths...)
+// SetEnv sets the environment variables found in the env map.
+func SetEnv(env map[string]string) {
+	for k, v := range env {
+		os.Setenv(k, v)
+	}
 }
 
-func WriteEnvFile(env map[string]string, filePath string) error {
+// ReadEnvFile allows to read the env map from a key value file
+// File content: key=value
+func ReadEnvFile(filePathOrEnvKey string) (map[string]string, error) {
+	filePath := getFilePathOrKey(GetEnv(), filePathOrEnvKey)
+	return godotenv.Read(filePath)
+}
+
+// WriteEnvFile writes the map content into an env file
+func WriteEnvFile(env map[string]string, filePathOrEnvKey string) error {
+	filePath := getFilePathOrKey(GetEnv(), filePathOrEnvKey)
 	return godotenv.Write(env, filePath)
 }
