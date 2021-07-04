@@ -19,3 +19,6 @@ var (
 // UnparserFunc is a function that receives a key and returns the key's value
 // UnparseFunctions go back to creating a map[string]string from the previously parse configuration struct.
 type UnparserFunc func() (string, error)
+
+// UnparserHook is a function that handles the writing to file of the unparsed result map.
+type UnparserHook func(map[string]string, error)

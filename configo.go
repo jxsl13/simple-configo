@@ -3,7 +3,19 @@ package configo
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
+
+	"github.com/joho/godotenv"
+)
+
+var (
+	// Signals are the default signals used in the UnparseOnSignal functions.
+	// You may change these variables in order to add or remove signals.
+	Signals = []os.Signal{os.Interrupt, syscall.SIGTERM}
 )
 
 // Config is an interface that implements only two methods.
@@ -23,6 +35,64 @@ type Config interface {
 // INFO: goroutine safe if config implements the sync.Locker interface.
 func ParseEnv(cfg Config) error {
 	return Parse(cfg, GetEnv())
+}
+
+func getFilePathOrKey(env map[string]string, filePathOrEnvKey string) string {
+	filePath := filePathOrEnvKey
+	value, found := env[filePathOrEnvKey]
+	if found && value != "" {
+		filePath = value
+	}
+	return filePath
+}
+
+// ParseEnVFile parses either the file at the provided location filePathOrEnvKey
+// or checks if the povided location is actually an environment variable pointing to a
+// file location.
+func ParseEnvFile(cfg Config, filePathOrEnvKey string) error {
+	env := GetEnv()
+	filePath := getFilePathOrKey(env, filePathOrEnvKey)
+
+	env, err := godotenv.Read(filePath)
+	if err != nil {
+		return err
+	}
+	return Parse(cfg, env)
+}
+
+// UnparseEnvFile writes the result either to the provided file path or in case
+// the path is actually an environment key, then it is written to the path that is found in the environment
+// under that key.
+func UnparseEnvFile(filePathOrEnvKey string) UnparserHook {
+	return func(envMap map[string]string, err error) {
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		env := GetEnv()
+		filePath := getFilePathOrKey(env, filePathOrEnvKey)
+
+		err = godotenv.Write(envMap, filePath)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+}
+
+// ParseEnvFileOrEnv tries to parse the
+func ParseEnvFileOrEnv(cfg Config, filePathOrEnvKey string) error {
+
+	env := GetEnv()
+	filePath := getFilePathOrKey(env, filePathOrEnvKey)
+
+	fileMap, err := godotenv.Read(filePath)
+	if err != nil {
+		// parse environment
+		return Parse(cfg, env)
+	}
+	// parse fileMap
+	return Parse(cfg, fileMap)
 }
 
 // Parse the passed envoronment map into the config struct.
@@ -72,6 +142,45 @@ func ParseOptions(options Options, env map[string]string) error {
 	}
 
 	return nil
+}
+
+// UnparseOnShutdown writes the content of the config into provided file path or the filepath provided
+// in the filePathOrEnvKey environment variable.
+func UnparseOnShutdown(cfg Config, filePathOrEnvKey string) {
+	UnparseOnSignal(cfg, UnparseEnvFile(filePathOrEnvKey))
+}
+
+// UnparseValidateOnShutdown is the same as UnparseOnShutdwon, but it also validates
+// the content of the resultung key value map by parsing that map again.
+func UnparseValidateOnShutdown(cfg Config, filePathOrEnvKey string) {
+	UnparseValidateOnSignal(cfg, UnparseEnvFile(filePathOrEnvKey))
+}
+
+// UnparseOnSignal starts a goroutine that waits until any of Signals defined in the Signals package variable
+// are received. Before just before the application terminates due to receiving a signal (not os.Exit(..))
+// then the unparsing of the configuration is executed, the resulting map can be then processed in the
+// callback function.
+// the default callback function that can be used is UnparseEnvFile in order to write the resulting map
+// to an .env file.
+func UnparseOnSignal(cfg Config, callback UnparserHook) {
+	go func(c Config, sigs ...os.Signal) {
+		notify := make(chan os.Signal, 1)
+		signal.Notify(notify, sigs...)
+		<-notify
+		callback(Unparse(c))
+	}(cfg, Signals...)
+}
+
+// UnparseValidateOnSignal is the same as UnparseOnSignal but after the unparsing it parses the resulting
+// map again in order to validate its content according to the ParseFunctions.
+// This might be useful in order to validate integer ranges that have been changed while the app has been running.
+func UnparseValidateOnSignal(cfg Config, callback UnparserHook) {
+	go func(c Config, sigs ...os.Signal) {
+		notify := make(chan os.Signal, 1)
+		signal.Notify(notify, sigs...)
+		<-notify
+		callback(UnparseValidate(c))
+	}(cfg, Signals...)
 }
 
 // Unparse is the reverse operation of Parse. It retrieves the values from the configuration and

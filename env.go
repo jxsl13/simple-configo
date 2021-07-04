@@ -3,6 +3,8 @@ package configo
 import (
 	"os"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 // GetEnv returns a map of OS environment variables
@@ -16,4 +18,14 @@ func GetEnv() map[string]string {
 		}
 	}
 	return env
+}
+
+// ReadEnvFile allows to read the env map from a key value file
+// File content: key=value
+func ReadEnvFile(filePaths ...string) (map[string]string, error) {
+	return godotenv.Read(filePaths...)
+}
+
+func WriteEnvFile(env map[string]string, filePath string) error {
+	return godotenv.Write(env, filePath)
 }
