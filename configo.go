@@ -18,6 +18,7 @@ type Config interface {
 
 // ParseEnv parse the environment variables and fills all of the definied options on the
 // configuration.
+// INFO: goroutine safe if config implements the sync.Locker interface.
 func ParseEnv(cfg Config) error {
 	return Parse(cfg, GetEnv())
 }
@@ -88,6 +89,8 @@ func Unparse(cfg Config) (map[string]string, error) {
 // UnparseValidate unparses the values and tries to parse the values again in order to validate their values
 // this allows to have a complex ParserFunction but a simple UnparserFunction, as all of the validation logic is
 // provided via the ParserFunction.
+// INFO: UnparseValidate is goroutine safe in case cfg implements the sync.Locker interface by either embedding
+// the sync.Mutex struct anonymously or by implementing the Lock() and Unlock() methods.
 func UnparseValidate(cfg Config) (map[string]string, error) {
 	locker, ok := cfg.(sync.Locker)
 	if ok {
@@ -114,6 +117,7 @@ func UnparseValidate(cfg Config) (map[string]string, error) {
 // Only options that define a UnparserFunction are serialized into their string values.
 // Options that do not differ from their default values are ignored in order to keep the returned map
 // as small as possible.
+// INFO: Not goroutine safe
 func UnparseOptions(options Options) (map[string]string, error) {
 	env := make(map[string]string, len(options))
 	for _, opt := range options {
