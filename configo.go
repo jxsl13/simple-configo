@@ -90,6 +90,10 @@ func UnparseOptions(options Options) (map[string]string, error) {
 		// Unparse (serialize) option values
 		value, err := opt.UnparseFunction()
 		if err != nil {
+			if errors.Is(err, ErrSkipUnparse) {
+				// skip unparsing in case the function returns the skip error.
+				continue
+			}
 			return nil, fmt.Errorf("error while unparsing the option '%s': %w", opt.Key, err)
 		}
 
