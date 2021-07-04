@@ -2,6 +2,7 @@ package configo_test
 
 import (
 	"encoding/json"
+	"sync"
 	"testing"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 
 type ErrorConfig struct {
 	SomeField int
+	sync.Mutex
 }
 
 func (ec *ErrorConfig) Name() string {
@@ -44,6 +46,15 @@ func TestParseError(t *testing.T) {
 
 type ErrorDefaultValuConfig struct {
 	SomeField bool
+	mu        sync.Mutex
+}
+
+func (e *ErrorDefaultValuConfig) Lock() {
+	e.mu.Lock()
+}
+
+func (e *ErrorDefaultValuConfig) Unlock() {
+	e.mu.Unlock()
 }
 
 func (ec *ErrorDefaultValuConfig) Name() string {
@@ -85,6 +96,7 @@ type MyConfig struct {
 	SomeChoiceFloat  float64
 	SomeChoiceString string
 	SomeRangeInt     int
+	sync.Mutex
 }
 
 func (m *MyConfig) String() string {
@@ -95,7 +107,7 @@ func (m *MyConfig) String() string {
 	return string(b)
 }
 
-func (m *MyConfig) Equal(other MyConfig) bool {
+func (m *MyConfig) Equal(other *MyConfig) bool {
 	eq := m.SomeBool == other.SomeBool &&
 		m.SomeInt == other.SomeInt &&
 		m.SomeFloat == other.SomeFloat &&
@@ -381,7 +393,7 @@ func Test_Parse(t *testing.T) {
 				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			if err == nil && !tt.args.cfg.Equal(*tt.args.result) {
+			if err == nil && !tt.args.cfg.Equal(tt.args.result) {
 				t.Fatalf("#%d : Parse() error = UNEXPECTED RESULT\nWANT:\n%s\nGOT:\n%s\n", idx+1, tt.args.result, tt.args.cfg)
 			}
 		})
@@ -390,9 +402,10 @@ func Test_Parse(t *testing.T) {
 
 type MandatoryConfig struct {
 	MandatoryRegex string
+	sync.Mutex
 }
 
-func (m *MandatoryConfig) Equal(other MandatoryConfig) bool {
+func (m *MandatoryConfig) Equal(other *MandatoryConfig) bool {
 	return m.MandatoryRegex == other.MandatoryRegex
 }
 
@@ -442,8 +455,12 @@ func Test_MandatoryParse(t *testing.T) {
 				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			if err == nil && !tt.args.cfg.Equal(*tt.args.result) {
-				t.Fatalf("#%d : Parse() error = UNEXPECTED RESULT\nWANT:\n%s\nGOT:\n%s\n", idx+1, tt.args.result, tt.args.cfg)
+			if err == nil && !tt.args.cfg.Equal(tt.args.result) {
+				t.Fatalf("#%d : Parse() error = UNEXPECTED RESULT\nWANT:\n%s\nGOT:\n%s\n",
+					idx+1,
+					tt.args.result.MandatoryRegex,
+					tt.args.cfg.MandatoryRegex,
+				)
 			}
 		})
 	}

@@ -1,7 +1,9 @@
 package configo
 
 import (
+	"errors"
 	"fmt"
+	"sync"
 )
 
 // Config is an interface that implements only two methods.
@@ -22,11 +24,21 @@ func ParseEnv(cfg Config) error {
 
 // Parse the passed envoronment map into the config struct.
 // Every Config defines, how its Options look like and how those are parsed.
+// INFO: In case Config implements the sync.Locker inteface by either embedding an anonymous sync.Mutex or by
+// implementing the methods func (cfg *Config) Lock() and func (cfg *Config) Unlock(), those methods are called before
+// attempting to parse the option values.
+// This allows
 func Parse(cfg Config, env map[string]string) error {
+	locker, ok := cfg.(sync.Locker)
+	if ok {
+		locker.Lock()
+		defer locker.Unlock()
+	}
 	return ParseOptions(cfg.Options(), env)
 }
 
 // for internal usage in order not to call cfg.Options() multiple times.
+// INFO: ParseOptions is not goroutine safe.
 func ParseOptions(options Options, env map[string]string) error {
 	for _, opt := range options {
 
@@ -62,11 +74,39 @@ func ParseOptions(options Options, env map[string]string) error {
 // Unparse is the reverse operation of Parse. It retrieves the values from the configuration and
 // serializes them to their respective string values in order to be able to writ ethem back to either
 // the environment or to a file.
-// This is usually necessary when you want to
+// INFO: In case cfg implements the sync.Locker interface by either embedding an anonymous sync.Mutex or
+// implementing the Lock() and Unlock() methods, then those methods are called in order to guard the configuration values.
 func Unparse(cfg Config) (map[string]string, error) {
-	// TODO: check if cfg implements the Lock/Unlock interface in order to lock and unlock it in
-	// case we unparse values that can be accessed in amultithreaded context
+	locker, ok := cfg.(sync.Locker)
+	if ok {
+		locker.Lock()
+		defer locker.Unlock()
+	}
 	return UnparseOptions(cfg.Options())
+}
+
+// UnparseValidate unparses the values and tries to parse the values again in order to validate their values
+// this allows to have a complex ParserFunction but a simple UnparserFunction, as all of the validation logic is
+// provided via the ParserFunction.
+func UnparseValidate(cfg Config) (map[string]string, error) {
+	locker, ok := cfg.(sync.Locker)
+	if ok {
+		locker.Lock()
+		defer locker.Unlock()
+	}
+	options := cfg.Options()
+	env, err := UnparseOptions(options)
+	if err != nil {
+		return nil, err
+	}
+
+	// validate through parse functions
+	err = ParseOptions(options, env)
+	if err != nil {
+		return nil, fmt.Errorf("failed to validate unparse options: %w", err)
+	}
+	// return map
+	return env, nil
 }
 
 // UnparseOptions returns a key value map from the parsed options.
