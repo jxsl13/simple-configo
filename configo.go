@@ -11,6 +11,8 @@ import (
 // The second method returns a list of Option objects that
 // are everything that is needed to fill the struct fields of your
 // custom interface implementation of Config.
+// WARNING: In case your configuration also implements the sync.Locker interface,
+// you MUST NOT Lock()/RLock() your mutex in the Options() method.
 type Config interface {
 	Name() string
 	Options() (options Options)
