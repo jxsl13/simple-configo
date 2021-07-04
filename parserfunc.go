@@ -7,6 +7,6 @@ package configo
 // possible return value
 type ParserFunc func(value string) error
 
-// UnparserFunc through another function that provides a reference to the actual configuration value.
-// Contrary to the ParserFunc it does provide the key as well as the value of the parent option.
-type UnparserFunc func(key, value string) error
+// UnparserFunc is a function that receives a key and returns the key's value
+// UnparseFunctions go back to creating a map[string]string from the previously parse configuration struct.
+type UnparserFunc func() (string, error)

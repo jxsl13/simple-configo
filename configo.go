@@ -14,6 +14,12 @@ type Config interface {
 	Options() (options Options)
 }
 
+// ParseEnv parse the environment variables and fills all of the definied options on the
+// configuration.
+func ParseEnv(cfg Config) error {
+	return Parse(cfg, GetEnv())
+}
+
 // Parse the passed envoronment map into the config struct.
 // Every Config defines, how its Options look like and how those are parsed.
 func Parse(cfg Config, env map[string]string) error {
@@ -53,19 +59,46 @@ func ParseOptions(options Options, env map[string]string) error {
 	return nil
 }
 
-// ParseWithUnparse parses the configuration the same way as the 'Parse' function and
-// initializes the shutdown hooks that are defined in the configuration's options.
-// The returned function is a blocking function that can be used in a 'defer unparse()' context where
-// the function blocks until the application received any of the defined shutdown signals.
-// once the signals are received, the function stops blocking and starts to execute the
-// UnparseFunctions of all of the defined Options in REVERSE order of their occurrance in the Options array.
-// One may also handle any errors that the returned function returns upon invokation.
-func ParseWithUnparse(cfg Config, env map[string]string) (func() error, error) {
-	// only call this function once in order not to cause any side effects wheh calling it again.
-	options := cfg.Options()
+// Unparse is the reverse operation of Parse. It retrieves the values from the configuration and
+// serializes them to their respective string values in order to be able to writ ethem back to either
+// the environment or to a file.
+// This is usually necessary when you want to
+func Unparse(cfg Config) (map[string]string, error) {
+	// TODO: check if cfg implements the Lock/Unlock interface in order to lock and unlock it in
+	// case we unparse values that can be accessed in amultithreaded context
+	return UnparseOptions(cfg.Options())
+}
 
-	if err := ParseOptions(options, env); err != nil {
-		return nil, err
+// UnparseOptions returns a key value map from the parsed options.
+// This is the reverse operation of ParseOptions.
+// Only options that define a UnparserFunction are serialized into their string values.
+// Options that do not differ from their default values are ignored in order to keep the returned map
+// as small as possible.
+func UnparseOptions(options Options) (map[string]string, error) {
+	env := make(map[string]string, len(options))
+	for _, opt := range options {
+
+		// also validate options in this function.
+		if err := opt.IsValid(); err != nil {
+			return nil, fmt.Errorf("the option definition for '%s' is invalid: %w", opt.Key, err)
+		}
+
+		// skip options that do not have an UnprserFunction
+		if opt.UnparseFunction == nil {
+			continue
+		}
+		// Unparse (serialize) option values
+		value, err := opt.UnparseFunction()
+		if err != nil {
+			return nil, fmt.Errorf("error while unparsing the option '%s': %w", opt.Key, err)
+		}
+
+		// skip default values in order to keep the config file/env variables map small.
+		if value == opt.DefaultValue {
+			continue
+		}
+
+		env[opt.Key] = value
 	}
-	return unparse(options, env), nil
+	return env, nil
 }
