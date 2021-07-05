@@ -80,3 +80,11 @@ func And(parsers ...configo.ParserFunc) configo.ParserFunc {
 		return nil
 	}
 }
+
+// If conditional allows to use different parsers base don the passed condition.
+func If(condition bool, trueCase configo.ParserFunc, falseCase configo.ParserFunc) configo.ParserFunc {
+	if condition {
+		return trueCase
+	}
+	return falseCase
+}
