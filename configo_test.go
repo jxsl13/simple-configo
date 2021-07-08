@@ -34,9 +34,9 @@ func (ec *ErrorConfig) Options() configo.Options {
 
 func TestParseError(t *testing.T) {
 
-	err := configo.Parse(&ErrorConfig{}, map[string]string{
+	err := configo.Parse(map[string]string{
 		"SOME_FIELD": "12345",
-	})
+	}, &ErrorConfig{})
 
 	if err == nil {
 		t.Errorf("Parse() EXPECTING ERROR, BUT GOT NONE!")
@@ -76,7 +76,7 @@ func (ec *ErrorDefaultValuConfig) Options() configo.Options {
 
 func TestParseDefaultValueError(t *testing.T) {
 
-	err := configo.Parse(&ErrorDefaultValuConfig{}, map[string]string{})
+	err := configo.Parse(map[string]string{}, &ErrorDefaultValuConfig{})
 
 	if err == nil {
 		t.Errorf("Parse() EXPECTING ERROR, BUT GOT NONE!")
@@ -388,7 +388,7 @@ func Test_Parse(t *testing.T) {
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := configo.Parse(tt.args.cfg, tt.args.env)
+			err := configo.Parse(tt.args.env, tt.args.cfg)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -450,7 +450,7 @@ func Test_MandatoryParse(t *testing.T) {
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := configo.Parse(tt.args.cfg, tt.args.env)
+			err := configo.Parse(tt.args.env, tt.args.cfg)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -511,7 +511,7 @@ func Test_InvalidMandatoryParse(t *testing.T) {
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := configo.Parse(tt.args.cfg, tt.args.env)
+			err := configo.Parse(tt.args.env, tt.args.cfg)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -572,7 +572,7 @@ func TestEmptyMandatoryParse(t *testing.T) {
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := configo.Parse(tt.args.cfg, tt.args.env)
+			err := configo.Parse(tt.args.env, tt.args.cfg)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -634,7 +634,7 @@ func TestInvalidDefaultValueParse(t *testing.T) {
 	for idx, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			err := configo.Parse(tt.args.cfg, tt.args.env)
+			err := configo.Parse(tt.args.env, tt.args.cfg)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 			}

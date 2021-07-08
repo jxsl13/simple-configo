@@ -84,7 +84,7 @@ func TestLogic(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := configo.Parse(tt.cfg, env)
+			err := configo.Parse(env, tt.cfg)
 			if tt.wantErr && err == nil || !tt.wantErr && err != nil {
 				t.Errorf("Want Error: %v, got: %v\n", tt.wantErr, err)
 			}

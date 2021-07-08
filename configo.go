@@ -23,8 +23,8 @@ type Config interface {
 // ParseEnv parse the environment variables and fills all of the definied options on the
 // configuration.
 // INFO: goroutine safe if config implements the sync.Locker interface.
-func ParseEnv(cfg Config) error {
-	return Parse(cfg, GetEnv())
+func ParseEnv(cfgs ...Config) error {
+	return Parse(GetEnv(), cfgs...)
 }
 
 func getFilePathOrKey(env map[string]string, filePathOrEnvKey string) string {
@@ -39,7 +39,7 @@ func getFilePathOrKey(env map[string]string, filePathOrEnvKey string) string {
 // ParseEnVFile parses either the file at the provided location filePathOrEnvKey
 // or checks if the povided location is actually an environment variable pointing to a
 // file location.
-func ParseEnvFile(cfg Config, filePathOrEnvKey string) error {
+func ParseEnvFile(filePathOrEnvKey string, cfgs ...Config) error {
 	env := GetEnv()
 	filePath := getFilePathOrKey(env, filePathOrEnvKey)
 
@@ -47,7 +47,7 @@ func ParseEnvFile(cfg Config, filePathOrEnvKey string) error {
 	if err != nil {
 		return err
 	}
-	return Parse(cfg, env)
+	return Parse(env, cfgs...)
 }
 
 // UnparseEnvFile is the opposite of ParseEnvFile. It serializes the map back into
@@ -62,7 +62,7 @@ func UnparseEnvFile(cfg Config, filePathOrEnvKey string) error {
 
 // ParseEnvFileOrEnv tries to parse the env file first and then the environment in case the file
 // parsing fails.
-func ParseEnvFileOrEnv(cfg Config, filePathOrEnvKey string) error {
+func ParseEnvFileOrEnv(filePathOrEnvKey string, cfgs ...Config) error {
 
 	env := GetEnv()
 	filePath := getFilePathOrKey(env, filePathOrEnvKey)
@@ -70,10 +70,10 @@ func ParseEnvFileOrEnv(cfg Config, filePathOrEnvKey string) error {
 	fileMap, err := godotenv.Read(filePath)
 	if err != nil {
 		// parse environment
-		return Parse(cfg, env)
+		return Parse(env, cfgs...)
 	}
 	// parse fileMap
-	return Parse(cfg, fileMap)
+	return Parse(fileMap, cfgs...)
 }
 
 // Parse the passed envoronment map into the config struct.
@@ -82,13 +82,25 @@ func ParseEnvFileOrEnv(cfg Config, filePathOrEnvKey string) error {
 // implementing the methods func (cfg *Config) Lock() and func (cfg *Config) Unlock(), those methods are called before
 // attempting to parse the option values.
 // This allows
-func Parse(cfg Config, env map[string]string) error {
-	locker, ok := cfg.(sync.Locker)
-	if ok {
-		locker.Lock()
-		defer locker.Unlock()
+func Parse(env map[string]string, cfgs ...Config) error {
+	for _, cfg := range cfgs {
+		err := func(c Config) error {
+			locker, ok := cfg.(sync.Locker)
+			if ok {
+				locker.Lock()
+				defer locker.Unlock()
+			}
+			err := ParseOptions(cfg.Options(), env)
+			if err != nil {
+				return err
+			}
+			return nil
+		}(cfg)
+		if err != nil {
+			return err
+		}
 	}
-	return ParseOptions(cfg.Options(), env)
+	return nil
 }
 
 // for internal usage in order not to call cfg.Options() multiple times.
@@ -130,13 +142,32 @@ func ParseOptions(options Options, env map[string]string) error {
 // the environment or to a file.
 // INFO: In case cfg implements the sync.Locker interface by either embedding an anonymous sync.Mutex or
 // implementing the Lock() and Unlock() methods, then those methods are called in order to guard the configuration values.
-func Unparse(cfg Config) (map[string]string, error) {
-	locker, ok := cfg.(sync.Locker)
-	if ok {
-		locker.Lock()
-		defer locker.Unlock()
+func Unparse(cfgs ...Config) (map[string]string, error) {
+	resultMap := make(map[string]string)
+	for _, cfg := range cfgs {
+		// wrapped in a function call in order to directly unlock
+		// the mutex after the parsing is done.
+		err := func(c Config) error {
+			locker, ok := c.(sync.Locker)
+			if ok {
+				locker.Lock()
+				defer locker.Unlock() // unlocked on return
+			}
+			env, err := UnparseOptions(c.Options())
+			if err != nil {
+				return err
+			}
+			for k, v := range env {
+				resultMap[k] = v
+			}
+			return nil
+		}(cfg)
+		if err != nil {
+			return nil, err
+		}
+
 	}
-	return UnparseOptions(cfg.Options())
+	return resultMap, nil
 }
 
 // UnparseValidate unparses the values and tries to parse the values again in order to validate their values
@@ -144,25 +175,39 @@ func Unparse(cfg Config) (map[string]string, error) {
 // provided via the ParserFunction.
 // INFO: UnparseValidate is goroutine safe in case cfg implements the sync.Locker interface by either embedding
 // the sync.Mutex struct anonymously or by implementing the Lock() and Unlock() methods.
-func UnparseValidate(cfg Config) (map[string]string, error) {
-	locker, ok := cfg.(sync.Locker)
-	if ok {
-		locker.Lock()
-		defer locker.Unlock()
-	}
-	options := cfg.Options()
-	env, err := UnparseOptions(options)
-	if err != nil {
-		return nil, err
-	}
+func UnparseValidate(cfgs ...Config) (map[string]string, error) {
+	resultEnv := make(map[string]string)
+	for _, cfg := range cfgs {
 
-	// validate through parse functions
-	err = ParseOptions(options, env)
-	if err != nil {
-		return nil, fmt.Errorf("failed to validate unparse options: %w", err)
+		err := func(c Config) error {
+			locker, ok := c.(sync.Locker)
+			if ok {
+				locker.Lock()
+				defer locker.Unlock()
+			}
+			options := c.Options()
+			env, err := UnparseOptions(options)
+			if err != nil {
+				return err
+			}
+
+			// validate through parse functions
+			err = ParseOptions(options, env)
+			if err != nil {
+				return fmt.Errorf("failed to validate unparse options: %w", err)
+			}
+			// add to result map
+			for k, v := range env {
+				resultEnv[k] = v
+			}
+			return nil
+		}(cfg)
+		if err != nil {
+			return nil, err
+		}
+
 	}
-	// return map
-	return env, nil
+	return resultEnv, nil
 }
 
 // UnparseOptions returns a key value map from the parsed options.
