@@ -52,8 +52,8 @@ func ParseEnvFile(filePathOrEnvKey string, cfgs ...Config) error {
 
 // UnparseEnvFile is the opposite of ParseEnvFile. It serializes the map back into
 // the file.
-func UnparseEnvFile(cfg Config, filePathOrEnvKey string) error {
-	env, err := Unparse(cfg)
+func UnparseEnvFile(filePathOrEnvKey string, cfgs ...Config) error {
+	env, err := Unparse(cfgs...)
 	if err != nil {
 		return err
 	}
