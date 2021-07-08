@@ -39,3 +39,22 @@ func WriteEnvFile(env map[string]string, filePathOrEnvKey string) error {
 	filePath := getFilePathOrKey(GetEnv(), filePathOrEnvKey)
 	return godotenv.Write(env, filePath)
 }
+
+// UpdateEnvFile reads the file and update sits content to the new values.
+func UpdateEnvFile(env map[string]string, filePathOrEnvKey string) error {
+	filePath := getFilePathOrKey(GetEnv(), filePathOrEnvKey)
+
+	old, err := godotenv.Read(filePath)
+	if err != nil {
+		return err
+	}
+	return godotenv.Write(update(old, env), filePath)
+}
+
+func update(old, new map[string]string) map[string]string {
+	m := old
+	for k, v := range new {
+		m[k] = v
+	}
+	return m
+}

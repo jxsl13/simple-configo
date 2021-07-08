@@ -57,7 +57,7 @@ func UnparseEnvFile(filePathOrEnvKey string, cfgs ...Config) error {
 	if err != nil {
 		return err
 	}
-	return WriteEnvFile(env, filePathOrEnvKey)
+	return UpdateEnvFile(env, filePathOrEnvKey)
 }
 
 // ParseEnvFileOrEnv tries to parse the env file first and then the environment in case the file
