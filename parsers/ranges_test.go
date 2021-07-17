@@ -20,6 +20,7 @@ func Test_IntRange_Contains(t *testing.T) {
 		args   args
 		want   bool
 	}{
+		{"#1", fields{0, 15}, args{1}, true},
 		{"#1", fields{1, 2}, args{1}, true},
 		{"#2", fields{1, 2}, args{2}, true},
 		{"#3", fields{1, 2}, args{0}, false},
@@ -133,6 +134,9 @@ func Test_DistinctRangeListInt_Contains(t *testing.T) {
 		{"#74", parsers.NewDistinctRangeListInt(1, 5, 2, 3), args{6}, false},
 		{"#75", parsers.NewDistinctRangeListInt(1, 5, 2, 3), args{2}, true},
 		{"#76", parsers.NewDistinctRangeListInt(1, 5, 2, 3), args{4}, true},
+
+		{"#77", parsers.NewDistinctRangeListInt(0, 15), args{1}, true},
+		{"#78", parsers.NewDistinctRangeListInt(0, 15), args{16}, false},
 
 		//{"#99", parsers.NewDistinctRangeListInt(1, 99), args{2}, false},
 	}
