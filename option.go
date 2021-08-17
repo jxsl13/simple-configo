@@ -65,18 +65,25 @@ func (o *Option) IsOption() bool {
 }
 
 func (o *Option) Parse(m map[string]string) error {
-	// Initially the config values are set to the default value, if the default value is valid
-	// pseudo options are not checked for valid keys or descriptions, nor whether their defaultvalues
-	// can be successfully parsed with the provided ParseFunc.
-	if err := o.IsValid(); err != nil {
-		return fmt.Errorf("the option definition for '%s' is invalid: %w", o.Key, err)
+
+	if err := tryExecAction(o.PreParseAction); err != nil {
+		return fmt.Errorf("pre parse action: %w", err)
 	}
 
+	// evaluation
 	value, ok := m[o.Key]
-	if o.Mandatory {
-		if o.DefaultValue == "" && !ok {
+	if !ok {
+		// value not found in env map
+		if o.Mandatory && o.DefaultValue == "" {
 			// no default value and no value in environment
 			return fmt.Errorf("error: missing mandatory key: %s", o.Key)
+		}
+	}
+
+	// mandatory values may be empty but only of the env value exists,
+	if !o.Mandatory || o.DefaultValue != "" {
+		if err := tryParse(o.DefaultValue, o.ParseFunction); err != nil {
+			return fmt.Errorf("error in default value of option '%s': %w", o.Key, err)
 		}
 	}
 
@@ -85,18 +92,13 @@ func (o *Option) Parse(m map[string]string) error {
 	// pseudo options do not evaluate the value, but get the value from somewhere else other than the passed
 	// string map. They might prompt the user via the shell, read some file etc.
 	if ok || o.IsPseudoOption {
-
-		if err := tryExecAction(o.PreParseAction); err != nil {
-			return fmt.Errorf("pre parse action: %w", err)
-		}
-
 		if err := tryParse(value, o.ParseFunction); err != nil {
 			return fmt.Errorf("error in value of option '%s': %w", o.Key, err)
 		}
+	}
 
-		if err := tryExecAction(o.PostParseAction); err != nil {
-			return fmt.Errorf("post parse action: %w", err)
-		}
+	if err := tryExecAction(o.PostParseAction); err != nil {
+		return fmt.Errorf("post parse action: %w", err)
 	}
 	return nil
 }
@@ -128,40 +130,8 @@ func (o *Option) Unparse() (string, error) {
 	return value, nil
 }
 
-// IsValid retrurns true if there are no programming errors
-func (o *Option) IsValid() error {
-
-	if o.Key == "" && !o.IsPseudoOption {
-		return ErrOptionMissingKey
-	}
-
-	if o.IsOption() && !o.IsPseudoOption && (o.DefaultValue != "" || !o.Mandatory) {
-		err := o.ParseFunction(o.DefaultValue)
-		if err != nil {
-			return fmt.Errorf("%w : %v", ErrOptionInvalidDefaultValue, err)
-		}
-	}
-
-	return nil
-}
-
-// MustValid enforces validity of the option.
-// panics if the programmer did a mistake
-func (o *Option) MustValid() {
-	if err := o.IsValid(); err != nil {
-		panic(fmt.Sprintf("error: %s : %v", o.Key, err))
-	}
-}
-
 // Options are usually unique, so one MUST NOT use redundant Option parameters
 type Options []Option
-
-// MustValid panics if any of the option definitions is not valid.
-func (o *Options) MustValid() {
-	for _, option := range *o {
-		option.MustValid()
-	}
-}
 
 func (o *Option) String() string {
 	type SubOption struct {
