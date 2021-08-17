@@ -16,7 +16,6 @@ import (
 // WARNING: In case your configuration also implements the sync.Locker interface,
 // you MUST NOT Lock()/RLock() your mutex in the Options() method.
 type Config interface {
-	Name() string
 	Options() (options Options)
 }
 
