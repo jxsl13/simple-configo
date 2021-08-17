@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	"github.com/jxsl13/simple-configo/internal"
 )
 
 // GetEnv returns a map of OS environment variables
@@ -37,17 +38,36 @@ func ReadEnvFile(filePathOrEnvKey string) (map[string]string, error) {
 // WriteEnvFile writes the map content into an env file
 func WriteEnvFile(env map[string]string, filePathOrEnvKey string) error {
 	filePath := getFilePathOrKey(GetEnv(), filePathOrEnvKey)
+
+	// try creating folder incase it's needed
+	err := internal.MkdirAll(filePath)
+	if err != nil {
+		return err
+	}
 	return godotenv.Write(env, filePath)
 }
 
 // UpdateEnvFile reads the file and update sits content to the new values.
 func UpdateEnvFile(env map[string]string, filePathOrEnvKey string) error {
 	filePath := getFilePathOrKey(GetEnv(), filePathOrEnvKey)
+	var err error
+	old := map[string]string{}
 
-	old, err := godotenv.Read(filePath)
+	// try creating folder incase it's needed
+	err = internal.MkdirAll(filePath)
 	if err != nil {
 		return err
 	}
+
+	// check if .env file exists
+	if internal.Exists(filePath) {
+		// update old values in case we can read the env file
+		old, err = godotenv.Read(filePath)
+		if err != nil {
+			return err
+		}
+	}
+	// update map and write back to filePath location
 	return godotenv.Write(update(old, env), filePath)
 }
 
