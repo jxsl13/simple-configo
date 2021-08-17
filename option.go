@@ -38,11 +38,10 @@ var (
 // needs a previously configured and evaluated directory path and some filename in order to construct that path.
 // INFO: A pseudo option enforces the execution of the parsing function, even if the corresponding key does not exist in e.g. the environment.
 type Option struct {
-	Key            string
-	Description    string
-	Mandatory      bool
-	DefaultValue   string
-	IsPseudoOption bool
+	Key          string
+	Description  string
+	Mandatory    bool
+	DefaultValue string
 
 	PreParseAction  ActionFunc
 	ParseFunction   ParserFunc
@@ -91,7 +90,7 @@ func (o *Option) Parse(m map[string]string) error {
 	// overwritten then
 	// pseudo options do not evaluate the value, but get the value from somewhere else other than the passed
 	// string map. They might prompt the user via the shell, read some file etc.
-	if ok || o.IsPseudoOption {
+	if ok {
 		if err := tryParse(value, o.ParseFunction); err != nil {
 			return fmt.Errorf("error in value of option '%s': %w", o.Key, err)
 		}
@@ -135,19 +134,17 @@ type Options []Option
 
 func (o *Option) String() string {
 	type SubOption struct {
-		Key            string
-		Description    string
-		Mandatory      bool
-		DefaultValue   string
-		IsPseudoOption bool
+		Key          string
+		Description  string
+		Mandatory    bool
+		DefaultValue string
 	}
 
 	so := SubOption{
-		Key:            o.Key,
-		Description:    o.Description,
-		Mandatory:      o.Mandatory,
-		DefaultValue:   o.DefaultValue,
-		IsPseudoOption: o.IsPseudoOption,
+		Key:          o.Key,
+		Description:  o.Description,
+		Mandatory:    o.Mandatory,
+		DefaultValue: o.DefaultValue,
 	}
 
 	b, err := json.MarshalIndent(&so, " ", " ")
