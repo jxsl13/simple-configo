@@ -198,7 +198,7 @@ func UnparseOptions(options Options) (map[string]string, error) {
 	env := make(map[string]string, len(options))
 	for _, opt := range options {
 
-		value, err := opt.UnparseFunction()
+		value, err := opt.Unparse()
 		if err != nil {
 			if errors.Is(err, ErrSkipUnparse) {
 				continue
