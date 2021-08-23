@@ -29,14 +29,17 @@ package main
 import (
     "encoding/json"
     "fmt"
+    "sync"
     "time"
 
     configo "github.com/jxsl13/simple-configo"
     "github.com/jxsl13/simple-configo/parsers"
+    "github.com/jxsl13/simple-configo/unparsers"
 )
 
 // MyConfig is a custom configuration that I want to use.
 type MyConfig struct {
+    sync.Mutex    // optional mutex to make the config goroutine safe
     SomeBool      bool
     SomeInt       int
     SomeFloat     float64
@@ -46,60 +49,62 @@ type MyConfig struct {
     SomeStringSet map[string]bool
 }
 
-// Name is the name of the configuration Cache
-func (m *MyConfig) Name() (name string) {
-    return "MY_CONFIG"
-}
-
 // Options returns a list of available options that can be configured for this
 // config object
 func (m *MyConfig) Options() (options configo.Options) {
-
+    // WARNING: no locking in this function.
     // NOTE: delimiter is parsed before the other values, this order is important,
     // as the delimiter is used afterwards.
     optionsList := configo.Options{
         {
-            Key:           "SOME_BOOL",
-            Mandatory:     true,
-            Description:   "This is some description text.",
-            DefaultValue:  "no",
-            ParseFunction: parsers.Bool(&m.SomeBool),
+            Key:             "SOME_BOOL",
+            Mandatory:       true,
+            Description:     "This is some description text.",
+            DefaultValue:    "no",
+            ParseFunction:   parsers.Bool(&m.SomeBool),
+            UnparseFunction: unparsers.Bool(&m.SomeBool),
         },
         {
-            Key:           "SOME_INT",
-            Description:   "This is some description text.",
-            DefaultValue:  "42",
-            ParseFunction: parsers.Int(&m.SomeInt),
+            Key:             "SOME_INT",
+            Description:     "This is some description text.",
+            DefaultValue:    "42",
+            ParseFunction:   parsers.Int(&m.SomeInt),
+            UnparseFunction: unparsers.Int(&m.SomeInt),
         },
         {
-            Key:           "SOME_FLOAT",
-            Description:   "This is some description text.",
-            DefaultValue:  "99.99",
-            ParseFunction: parsers.Float(&m.SomeFloat, 64),
+            Key:             "SOME_FLOAT",
+            Description:     "This is some description text.",
+            DefaultValue:    "99.99",
+            ParseFunction:   parsers.Float(&m.SomeFloat, 64),
+            UnparseFunction: unparsers.Float(&m.SomeFloat, 64),
         },
         {
-            Key:           "SOME_DELIMITER",
-            Description:   "delimiter to split the lists below.",
-            DefaultValue:  " ",
-            ParseFunction: parsers.String(&m.SomeDelimiter),
+            Key:             "SOME_DELIMITER",
+            Description:     "delimiter to split the lists below.",
+            DefaultValue:    " ",
+            ParseFunction:   parsers.String(&m.SomeDelimiter),
+            UnparseFunction: unparsers.String(&m.SomeDelimiter),
         },
         {
-            Key:           "SOME_DURATION",
-            Description:   "This is some description text.",
-            DefaultValue:  "24h12m44s",
-            ParseFunction: parsers.Duration(&m.SomeDuration),
+            Key:             "SOME_DURATION",
+            Description:     "This is some description text.",
+            DefaultValue:    "24h12m44s",
+            ParseFunction:   parsers.Duration(&m.SomeDuration),
+            UnparseFunction: unparsers.Duration(&m.SomeDuration),
         },
         {
-            Key:           "SOME_LIST",
-            Description:   "Some IP list",
-            DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3",
-            ParseFunction: parsers.List(&m.SomeList, &m.SomeDelimiter),
+            Key:             "SOME_LIST",
+            Description:     "Some IP list",
+            DefaultValue:    "127.0.0.1 127.0.0.2 127.0.0.3",
+            ParseFunction:   parsers.List(&m.SomeList, &m.SomeDelimiter),
+            UnparseFunction: unparsers.List(&m.SomeList, &m.SomeDelimiter),
         },
         {
-            Key:           "SOME_SET",
-            Description:   "This is some description text.",
-            DefaultValue:  "127.0.0.1 127.0.0.2 127.0.0.3 127.0.0.1",
-            ParseFunction: parsers.ListToSet(&m.SomeStringSet, &m.SomeDelimiter),
+            Key:             "SOME_SET",
+            Description:     "This is some description text.",
+            DefaultValue:    "127.0.0.1 127.0.0.2 127.0.0.3 127.0.0.1",
+            ParseFunction:   parsers.ListToSet(&m.SomeStringSet, &m.SomeDelimiter),
+            UnparseFunction: unparsers.SetToList(&m.SomeStringSet, &m.SomeDelimiter),
         },
     }
 
@@ -124,7 +129,7 @@ func main() {
     }
 
     myCfg := &MyConfig{}
-    if err := configo.Parse(myCfg, env); err != nil {
+    if err := configo.Parse(env, myCfg); err != nil {
         panic(err)
     }
 
@@ -133,6 +138,18 @@ func main() {
     }
 
     b, err := json.MarshalIndent(&myCfg, " ", " ")
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println(string(b))
+
+
+    newEnvMap, err := configo.Unparse(myCfg)
+    if err != nil {
+        panic(err)
+    }
+    // write map to file, update some database, redis, etc.
+    b, err = json.MarshalIndent(&newEnvMap, " ", " ")
     if err != nil {
         panic(err)
     }
