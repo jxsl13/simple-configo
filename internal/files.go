@@ -17,18 +17,30 @@ func Exists(filePath string) bool {
 	return true
 }
 
-// Save allows to save the text at a given filePath
-func Save(text, filePath string, perm ...fs.FileMode) error {
+// MkdirAll take sthe file path and removes the file name from the file
+// afterwards it creates all directories below that filepath.
+func MkdirAll(filePath string, perm ...fs.FileMode) error {
 	var mode fs.FileMode = 0600
 	if len(perm) > 0 {
 		mode = perm[0]
 	}
 	dirPath := path.Dir(filePath)
 
-	if !Exists(filePath) {
-		if err := os.MkdirAll(dirPath, mode); err != nil {
-			return err
-		}
+	if !Exists(dirPath) {
+		return os.MkdirAll(dirPath, mode)
+	}
+	return nil
+}
+
+// Save allows to save the text at a given filePath
+func Save(text, filePath string, perm ...fs.FileMode) error {
+	var mode fs.FileMode = 0600
+	if len(perm) > 0 {
+		mode = perm[0]
+	}
+	err := MkdirAll(filePath, mode)
+	if err != nil {
+		return err
 	}
 
 	return ioutil.WriteFile(filePath, []byte(text), mode)

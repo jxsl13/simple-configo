@@ -28,39 +28,32 @@ func (s *testCfg) Name() string {
 func (s *testCfg) Options() configo.Options {
 	return configo.Options{
 		{
-			Key:            "#0",
-			IsPseudoOption: true,
-			ParseFunction:  parsers.Xor(errParser, errParser, nilParser, errParser),
+			Key:           "#0",
+			ParseFunction: parsers.Xor(errParser, errParser, nilParser, errParser),
 		},
 		{
-			Key:            "#1",
-			IsPseudoOption: true,
-			ParseFunction:  parsers.Or(errParser, errParser, nilParser, errParser),
+			Key:           "#1",
+			ParseFunction: parsers.Or(errParser, errParser, nilParser, errParser),
 		},
 		{
-			Key:            "#2",
-			IsPseudoOption: true,
-			ParseFunction:  parsers.Or(errParser, nilParser),
+			Key:           "#2",
+			ParseFunction: parsers.Or(errParser, nilParser),
 		},
 		{
-			Key:            "#3",
-			IsPseudoOption: true,
-			ParseFunction:  parsers.And(nilParser, nilParser),
+			Key:           "#3",
+			ParseFunction: parsers.And(nilParser, nilParser),
 		},
 		{
-			Key:            "#4",
-			IsPseudoOption: true,
-			ParseFunction:  parsers.And(errParser, nilParser),
+			Key:           "#4",
+			ParseFunction: parsers.And(errParser, nilParser),
 		},
 		{
-			Key:            "#5",
-			IsPseudoOption: true,
-			ParseFunction:  parsers.Or(errParser, errParser),
+			Key:           "#5",
+			ParseFunction: parsers.Or(errParser, errParser),
 		},
 		{
-			Key:            "#6",
-			IsPseudoOption: true,
-			ParseFunction:  parsers.Xor(errParser, errParser, nilParser, errParser, nilParser, errParser, errParser),
+			Key:           "#6",
+			ParseFunction: parsers.Xor(errParser, errParser, nilParser, errParser, nilParser, errParser, errParser),
 		},
 	}[s.Start:s.End]
 }

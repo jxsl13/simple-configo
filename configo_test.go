@@ -2,6 +2,8 @@ package configo_test
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -226,7 +228,6 @@ func (m *MyConfig) Options() (options configo.Options) {
 		optionsList[idx].Key = "MY_" + optionsList[idx].Key
 	}
 
-	optionsList.MustValid()
 	return optionsList
 }
 
@@ -642,6 +643,81 @@ func TestInvalidDefaultValueParse(t *testing.T) {
 			if err == nil && !tt.args.cfg.Equal(*tt.args.result) {
 				t.Fatalf("#%d : Parse() error = UNEXPECTED RESULT\nWANT:\n%s\nGOT:\n%s\n", idx+1, tt.args.result, tt.args.cfg)
 			}
+		})
+	}
+}
+
+type ActionConfig struct {
+	peter string
+	start int
+	end   int
+}
+
+func (m *ActionConfig) Options() configo.Options {
+	return configo.Options{
+		{
+			Key: "some key that will be irgnored",
+			PreParseAction: func() error {
+				m.peter = "pre parse"
+				return nil
+			},
+			PostParseAction: func() error {
+				if m.peter != "pre parse" {
+					return errors.New("m.peter is not pre parse")
+				}
+				m.peter = "post parse"
+				return nil
+			},
+		},
+		{
+			Key: "second key but it has a parsefunc",
+			PreParseAction: func() error {
+				m.peter = "pre parse"
+				return nil
+			},
+			ParseFunction: func(value string) error {
+				m.peter = "parse function"
+
+				return nil
+			},
+			PostParseAction: func() error {
+				if m.peter != "pre parse" {
+					return fmt.Errorf("m.peter is not pre parse: %s", m.peter)
+				}
+				m.peter = "post parse"
+				return nil
+			},
+		},
+	}[m.start:m.end]
+}
+
+func TestActionOption(t *testing.T) {
+	type args struct {
+		cfg         *ActionConfig
+		env         map[string]string
+		resultPeter string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{"#1", args{&ActionConfig{start: 0, end: 1}, map[string]string{}, "post parse"}, false},
+		{"#2", args{&ActionConfig{start: 1, end: 2}, map[string]string{}, "post parse"}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			err := configo.Parse(tt.args.env, tt.args.cfg)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err == nil && tt.args.cfg.peter != tt.args.resultPeter {
+				t.Errorf("want: %s != got: %s", tt.args.cfg.peter, tt.args.resultPeter)
+			}
+
 		})
 	}
 }

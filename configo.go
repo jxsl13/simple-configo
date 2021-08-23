@@ -16,7 +16,6 @@ import (
 // WARNING: In case your configuration also implements the sync.Locker interface,
 // you MUST NOT Lock()/RLock() your mutex in the Options() method.
 type Config interface {
-	Name() string
 	Options() (options Options)
 }
 
@@ -107,30 +106,9 @@ func Parse(env map[string]string, cfgs ...Config) error {
 // INFO: ParseOptions is not goroutine safe.
 func ParseOptions(options Options, env map[string]string) error {
 	for _, opt := range options {
-
-		// Initially the config values are set to the default value, if the default value is valid
-		// pseudo options are not checked for valid keys or descriptions, nor whether their defaultvalues
-		// can be successfully parsed with the provided ParseFunc.
-		if err := opt.IsValid(); err != nil {
-			return fmt.Errorf("the option definition for '%s' is invalid: %w", opt.Key, err)
-		}
-
-		value, ok := env[opt.Key]
-		if opt.Mandatory {
-			if opt.DefaultValue == "" && !ok {
-				// no default value and no value in environment
-				return fmt.Errorf("error: missing mandatory key: %s", opt.Key)
-			}
-		}
-
-		// if we do get a valid value from the passed map, the default value is
-		// overwritten then
-		// pseudo options do not evaluate the value, but get the value from somewhere else other than the passed
-		// string map. They might prompt the user via the shell, read some file etc.
-		if ok || opt.IsPseudoOption {
-			if err := opt.ParseFunction(value); err != nil {
-				return fmt.Errorf("error in value of option '%s': %w", opt.Key, err)
-			}
+		err := opt.Parse(env)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -220,30 +198,15 @@ func UnparseOptions(options Options) (map[string]string, error) {
 	env := make(map[string]string, len(options))
 	for _, opt := range options {
 
-		// also validate options in this function.
-		if err := opt.IsValid(); err != nil {
-			return nil, fmt.Errorf("the option definition for '%s' is invalid: %w", opt.Key, err)
-		}
-
-		// skip options that do not have an UnprserFunction
-		if opt.UnparseFunction == nil {
-			continue
-		}
-		// Unparse (serialize) option values
-		value, err := opt.UnparseFunction()
+		value, err := opt.Unparse()
 		if err != nil {
 			if errors.Is(err, ErrSkipUnparse) {
-				// skip unparsing in case the function returns the skip error.
 				continue
 			}
-			return nil, fmt.Errorf("error while unparsing the option '%s': %w", opt.Key, err)
+			// unknown error
+			return nil, err
 		}
-
-		// skip default values in order to keep the config file/env variables map small.
-		if value == opt.DefaultValue {
-			continue
-		}
-
+		// set map value
 		env[opt.Key] = value
 	}
 	return env, nil

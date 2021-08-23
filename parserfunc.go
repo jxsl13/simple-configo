@@ -19,3 +19,17 @@ var (
 // UnparserFunc is a function that receives a key and returns the key's value
 // UnparseFunctions go back to creating a map[string]string from the previously parse configuration struct.
 type UnparserFunc func() (string, error)
+
+func tryParse(value string, f ParserFunc) error {
+	if f == nil {
+		return nil
+	}
+	return f(value)
+}
+
+func tryUnparse(f UnparserFunc) (string, error) {
+	if f == nil {
+		return "", ErrSkipUnparse
+	}
+	return f()
+}

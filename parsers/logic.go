@@ -12,9 +12,20 @@ func fmtErr(prefix string, errs []error) error {
 	// format errors
 	cErr := errors.New(prefix)
 	for _, err := range errs {
-		cErr = fmt.Errorf("%w\n -%v", cErr, err)
+		cErr = fmt.Errorf("%w\n - %v", cErr, err)
 	}
 	return cErr
+}
+
+// Not negates the result of a given parser
+func Not(parser configo.ParserFunc) configo.ParserFunc {
+	return func(value string) error {
+		err := parser(value)
+		if err != nil {
+			return nil
+		}
+		return errors.New("expected parsing failure")
+	}
 }
 
 // Or succeeds if any of the provided functions result in a successful state
@@ -31,7 +42,7 @@ func Or(parsers ...configo.ParserFunc) configo.ParserFunc {
 			if err != nil {
 				errs = append(errs, err)
 			} else {
-				// return the first working parser
+				// return on first success
 				return nil
 			}
 		}
