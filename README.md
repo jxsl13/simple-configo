@@ -141,7 +141,3 @@ func main() {
 ```
 
 This is everything you need to write in order to parse a configuration file with key value pairs into a struct of your choise.
-
-## TODO
-
-- Create parsers.WrapperXXX(f ParserFunc) (g ParserFunc) functions that may wrap those functions howewer they want?
