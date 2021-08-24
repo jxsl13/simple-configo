@@ -99,3 +99,16 @@ func If(condition bool, trueCase configo.ParserFunc, falseCase configo.ParserFun
 	}
 	return falseCase
 }
+
+var (
+	noOp = func(string) error { return nil }
+)
+
+// OnlyIf executes the trueCase action only in the case that the condition is true
+// otherwise an empty function is returned
+func OnlyIf(condition bool, trueCase configo.ParserFunc) configo.ParserFunc {
+	if condition {
+		return trueCase
+	}
+	return noOp
+}

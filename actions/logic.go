@@ -104,3 +104,20 @@ func If(condition bool, trueCase configo.ActionFunc, falseCase configo.ActionFun
 func IfAction(condition configo.ActionFunc, trueCase configo.ActionFunc, falseCase configo.ActionFunc) configo.ActionFunc {
 	return If(condition() == nil, trueCase, falseCase)
 }
+
+var (
+	noOp = func() error { return nil }
+)
+
+// OnlyIf executes the trueCase action only in the case that the condition is true
+// otherwise an empty function is returned
+func OnlyIf(condition bool, trueCase configo.ActionFunc) configo.ActionFunc {
+	if condition {
+		return trueCase
+	}
+	return noOp
+}
+
+func OnlyIfAction(condition configo.ActionFunc, trueCase configo.ActionFunc) configo.ActionFunc {
+	return OnlyIf(condition() == nil, trueCase)
+}
