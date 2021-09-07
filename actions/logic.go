@@ -93,31 +93,43 @@ func And(actions ...configo.ActionFunc) configo.ActionFunc {
 }
 
 // If conditional allows to use different actions based on the passed condition.
-func If(condition bool, trueCase configo.ActionFunc, falseCase configo.ActionFunc) configo.ActionFunc {
-	if condition {
-		return trueCase
+func If(condition *bool, trueCase configo.ActionFunc, falseCase configo.ActionFunc) configo.ActionFunc {
+	return func() error {
+		if *condition {
+			return trueCase()
+		}
+		return falseCase()
 	}
-	return falseCase
 }
 
 // IfAction conditional allows to use different actions based on the passed condition.
 func IfAction(condition configo.ActionFunc, trueCase configo.ActionFunc, falseCase configo.ActionFunc) configo.ActionFunc {
-	return If(condition() == nil, trueCase, falseCase)
-}
-
-var (
-	noOp = func() error { return nil }
-)
-
-// OnlyIf executes the trueCase action only in the case that the condition is true
-// otherwise an empty function is returned
-func OnlyIf(condition bool, trueCase configo.ActionFunc) configo.ActionFunc {
-	if condition {
-		return trueCase
+	return func() error {
+		if condition() == nil {
+			return trueCase()
+		}
+		return falseCase()
 	}
-	return noOp
 }
 
+// OnlyIf executes the trueCase action only in the case that the condition is true at the time when the
+// parent option is parsed. Not at the time of option definition
+func OnlyIf(condition *bool, trueCase configo.ActionFunc) configo.ActionFunc {
+	return func() error {
+		if *condition {
+			return trueCase()
+		}
+		return nil
+	}
+}
+
+// OnlyIfAction executes the true case action at the time of option parsing only
+// when the condition does return nil at the time of option parsing
 func OnlyIfAction(condition configo.ActionFunc, trueCase configo.ActionFunc) configo.ActionFunc {
-	return OnlyIf(condition() == nil, trueCase)
+	return func() error {
+		if condition() == nil {
+			return trueCase()
+		}
+		return nil
+	}
 }

@@ -93,22 +93,22 @@ func And(parsers ...configo.ParserFunc) configo.ParserFunc {
 }
 
 // If conditional allows to use different parsers base don the passed condition.
-func If(condition bool, trueCase configo.ParserFunc, falseCase configo.ParserFunc) configo.ParserFunc {
-	if condition {
-		return trueCase
+func If(condition *bool, trueCase configo.ParserFunc, falseCase configo.ParserFunc) configo.ParserFunc {
+	return func(value string) error {
+		if *condition {
+			return trueCase(value)
+		}
+		return falseCase(value)
 	}
-	return falseCase
 }
-
-var (
-	noOp = func(string) error { return nil }
-)
 
 // OnlyIf executes the trueCase action only in the case that the condition is true
 // otherwise an empty function is returned
-func OnlyIf(condition bool, trueCase configo.ParserFunc) configo.ParserFunc {
-	if condition {
-		return trueCase
+func OnlyIf(condition *bool, trueCase configo.ParserFunc) configo.ParserFunc {
+	return func(value string) error {
+		if *condition {
+			return trueCase(value)
+		}
+		return nil
 	}
-	return noOp
 }
