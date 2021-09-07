@@ -112,3 +112,23 @@ func OnlyIf(condition *bool, trueCase configo.ParserFunc) configo.ParserFunc {
 		return nil
 	}
 }
+
+// OnlyIfNotNil executes the trueCase function when the condition is NOT nil at evaluation time
+func OnlyIfNotNil(condition interface{}, trueCase configo.ParserFunc) configo.ParserFunc {
+	return func(value string) error {
+		if condition != nil {
+			return trueCase(value)
+		}
+		return nil
+	}
+}
+
+// OnlyIfNotNil executes the trueCase function when the condition is nil at evaluation time
+func OnlyIfNil(condition interface{}, trueCase configo.ParserFunc) configo.ParserFunc {
+	return func(value string) error {
+		if condition == nil {
+			return trueCase(value)
+		}
+		return nil
+	}
+}

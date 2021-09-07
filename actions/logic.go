@@ -133,3 +133,25 @@ func OnlyIfAction(condition configo.ActionFunc, trueCase configo.ActionFunc) con
 		return nil
 	}
 }
+
+// OnlyIfNotNil executes the true case action at the time of option parsing only
+// when the condition is NOT nil at the time of option parsing
+func OnlyIfNotNil(condition interface{}, trueCase configo.ActionFunc) configo.ActionFunc {
+	return func() error {
+		if condition != nil {
+			return trueCase()
+		}
+		return nil
+	}
+}
+
+// OnlyIfNil executes the true case action at the time of option parsing only
+// when the condition is nil at the time of option parsing
+func OnlyIfNil(condition interface{}, trueCase configo.ActionFunc) configo.ActionFunc {
+	return func() error {
+		if condition == nil {
+			return trueCase()
+		}
+		return nil
+	}
+}
