@@ -47,22 +47,35 @@ type Option struct {
 	ParseFunction   ParserFunc
 	PostParseAction ActionFunc
 
-	PreUnparseAction ActionFunc
-	UnparseFunction  UnparserFunc
+	PreUnparseAction  ActionFunc   // used to prepare values for serialization, may return an ErrSkipUnparse to skip the unparsing step.
+	UnparseFunction   UnparserFunc // execute string serialization, may return an ErrSkipUnparse
+	PostUnparseAction ActionFunc   // may be used for closing handles after parameter serialization, cannot invoke unparse skipping
 }
 
+// IsAction returns true in case the provided option has no ParseFunction nor UnparseFunction
+// defined and at least one Action defined.
 func (o *Option) IsAction() bool {
 	return o.ParseFunction == nil &&
 		o.UnparseFunction == nil &&
 		(o.PreParseAction != nil ||
 			o.PostParseAction != nil ||
-			o.PreUnparseAction != nil)
+			o.PreUnparseAction != nil ||
+			o.PostUnparseAction != nil)
 }
 
+// IsOption retursns true in case either ParseFunction or UnparseFunction is not nil.
 func (o *Option) IsOption() bool {
 	return o.ParseFunction != nil || o.UnparseFunction != nil
 }
 
+// Parse evaluates the passed key/value map.
+// Initially the PreparseAction is executed in case it exists, then the ParseFunction is executed with the map value
+// that may or may not exist. Depending on whether the option is mandatory and not default value is set in that option,
+// it requires that the option value is provided by the key/value map.
+// After parsing the PostParseAction is executed.
+// In case that the expected value is not provided by the env map, the default value is parsed instead.
+// The default value is always parsed in order to check whether it is valid according to the ParseFunction.
+// In case a custom value is defined the default value is overwritten by the custom value.
 func (o *Option) Parse(m map[string]string) error {
 
 	if err := tryExecAction(o.PreParseAction); err != nil {
@@ -79,7 +92,7 @@ func (o *Option) Parse(m map[string]string) error {
 		}
 	}
 
-	// mandatory values may be empty but only of the env value exists,
+	// mandatory values may be empty but only if the env value exists,
 	if !o.Mandatory || o.DefaultValue != "" {
 		if err := tryParse(o.DefaultValue, o.ParseFunction); err != nil {
 			return fmt.Errorf("error in default value of option '%s': %w", o.Key, err)
@@ -102,6 +115,14 @@ func (o *Option) Parse(m map[string]string) error {
 	return nil
 }
 
+// Unparse executes the PreUnparseAction, UnparseFunction and the PostUnparseAction
+// Depending on the UnparseFunction we get a string representation of a value back.
+// This is the inverse operation of parsing, usually a serialization operation
+// The returned value represents the value at the key o.Key in the resulting env map
+// that is of type map[string]string.
+// This function may return a configo.ErrSkipUnparse error which indicates that
+// that the returned value is not added to any map or that we do not want to unparse (serialize)
+// any values of this option struct.
 func (o *Option) Unparse() (string, error) {
 
 	err := tryExecAction(o.PreUnparseAction)
@@ -123,15 +144,27 @@ func (o *Option) Unparse() (string, error) {
 
 	// skip default values in order to keep the config file/env variables map small.
 	if value == o.DefaultValue {
-		// allow user to manually decide whether to use or not to us ethe value
+		// allow user to manually decide whether to use or not to use the value
+		// this is important in the case that we do define a lot of sane default values
+		// in our application that do not necessarily need to be written to the config map
 		return value, ErrSkipUnparse
 	}
+
+	// PostUnparseAction may be used to close connections, file handles, etc.
+	err = tryExecAction(o.PostUnparseAction)
+	if err != nil {
+		// at this point we cannot skip the unparsing(serialization),
+		// as it has already happened.
+		return "", fmt.Errorf("post unparse action: %w", err)
+	}
+
 	return value, nil
 }
 
 // Options are usually unique, so one MUST NOT use redundant Option parameters
 type Options []Option
 
+// String returns a string representation of the option. w/o any function pointers
 func (o *Option) String() string {
 	type SubOption struct {
 		Key          string
