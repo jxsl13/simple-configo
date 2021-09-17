@@ -20,7 +20,7 @@ That's why the `configo.Parse`function looks the way it does, you pass an `env m
 
 In order to create your own custom configuration struct that is supposed to fetch values from your environment or a `.env` file, use a third party package or the `os` package to fetch a map of your envirnonment variables.
 
-Go Playground example: [https://play.golang.org/p/Wc0FSCVvK1r](https://play.golang.org/p/Wc0FSCVvK1r)
+Go Playground example: [https://play.golang.org/p/lsyBJv9ItzV](https://play.golang.org/p/lsyBJv9ItzV)
 
 ```go
 package main
