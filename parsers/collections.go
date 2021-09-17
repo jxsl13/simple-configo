@@ -5,11 +5,14 @@ import (
 	"strings"
 
 	configo "github.com/jxsl13/simple-configo"
+	"github.com/jxsl13/simple-configo/internal"
 )
 
 // List parses a string containing a 'delimiter'(space, comma, semicolon, etc.) delimited list
 // into the string list 'out'
 func List(out *[]string, delimiter *string) configo.ParserFunc {
+	internal.PanicIfNil(out, delimiter)
+
 	return func(value string) error {
 		list := strings.Split(value, *delimiter)
 
@@ -24,6 +27,8 @@ func List(out *[]string, delimiter *string) configo.ParserFunc {
 // ListToSet parses a string containing a 'delimiter'(space, comma, semicolon, etc.) delimited list
 // into set 'out'
 func ListToSet(out *map[string]bool, delimiter *string) configo.ParserFunc {
+	internal.PanicIfNil(out, delimiter)
+
 	return func(value string) error {
 		list := strings.Split(value, *delimiter)
 
@@ -41,6 +46,8 @@ func ListToSet(out *map[string]bool, delimiter *string) configo.ParserFunc {
 
 // UniqueList enforces that the passed list contains only unique values
 func UniqueList(out *[]string, delimiter *string) configo.ParserFunc {
+	internal.PanicIfNil(out, delimiter)
+
 	return func(value string) error {
 		list := strings.Split(value, *delimiter)
 
@@ -60,6 +67,8 @@ func UniqueList(out *[]string, delimiter *string) configo.ParserFunc {
 
 // Map allows to define key->value associations directly inside of a single parameter
 func Map(out *map[string]string, pairDelimiter, keyValueDelimiter *string) configo.ParserFunc {
+	internal.PanicIfNil(out, pairDelimiter, keyValueDelimiter)
+
 	return func(value string) error {
 		if *pairDelimiter == *keyValueDelimiter {
 			return fmt.Errorf("pairDelimiter and keyValueDelimiter must not be equal: '%s'", *pairDelimiter)
@@ -96,6 +105,8 @@ func Map(out *map[string]string, pairDelimiter, keyValueDelimiter *string) confi
 // This might be useful if you want to construct a two way mapping that is able to associate a key to a value as well as
 // the association form a value back to its key.
 func MapReverse(out *map[string]string, pairDelimiter, keyValueDelimiter *string) configo.ParserFunc {
+	internal.PanicIfNil(out, pairDelimiter, keyValueDelimiter)
+
 	return func(value string) error {
 		if *pairDelimiter == *keyValueDelimiter {
 			return fmt.Errorf("pairDelimiter and keyValueDelimiter must not be equal: '%s'", *pairDelimiter)
@@ -134,6 +145,8 @@ func MapReverse(out *map[string]string, pairDelimiter, keyValueDelimiter *string
 // value at the exact same position of the passed "value" string that is split into another
 // list is creates. keys{0, 1, 2, 3} -> values{0, 1, 2, 3}
 func MapFromKeysSlice(out *map[string]string, keys *[]string, delimiter *string) configo.ParserFunc {
+	internal.PanicIfNil(out, keys, delimiter)
+
 	return func(value string) error {
 		values := strings.Split(value, *delimiter)
 

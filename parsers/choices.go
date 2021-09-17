@@ -5,11 +5,14 @@ import (
 	"strconv"
 
 	configo "github.com/jxsl13/simple-configo"
+	"github.com/jxsl13/simple-configo/internal"
 )
 
 // ChoiceString restricts the string value to a given set of values
 // that are passed with the 'allowed' parameter.
 func ChoiceString(out *string, allowed ...string) configo.ParserFunc {
+	internal.PanicIfNil(out)
+	internal.PanicIfEmptyString(allowed)
 
 	// create set only once in order to have a fast access later on
 	// in order not to waste RAM, we waste a few CPU cycles instead, if allowed contains
@@ -35,6 +38,8 @@ func ChoiceString(out *string, allowed ...string) configo.ParserFunc {
 // ChoiceInt restricts the integer value to a given set of values
 // that are passed with the 'allowed' parameter.
 func ChoiceInt(out *int, allowed ...int) configo.ParserFunc {
+	internal.PanicIfNil(out)
+	internal.PanicIfEmptyInt(allowed)
 
 	// create set only once in order to have a fast access later on
 	// in order not to waste RAM, we waste a few CPU cycles instead, if allowed contains
@@ -64,6 +69,8 @@ func ChoiceInt(out *int, allowed ...int) configo.ParserFunc {
 // ChoiceFloat restricts the float value to a given set of values
 // that are passed with the 'allowed' parameter.
 func ChoiceFloat(out *float64, bitSize int, allowed ...float64) configo.ParserFunc {
+	internal.PanicIfNil(out)
+	internal.PanicIfEmptyFloat(allowed)
 
 	// create set only once in order to have a fast access later on
 	// in order not to waste RAM, we waste a few CPU cycles instead, if allowed contains

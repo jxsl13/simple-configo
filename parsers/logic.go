@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	configo "github.com/jxsl13/simple-configo"
+	"github.com/jxsl13/simple-configo/internal"
 )
 
 // error formatting
@@ -19,6 +20,8 @@ func fmtErr(prefix string, errs []error) error {
 
 // Not negates the result of a given parser
 func Not(parser configo.ParserFunc) configo.ParserFunc {
+	internal.PanicIfNil(parser)
+
 	return func(value string) error {
 		err := parser(value)
 		if err != nil {
@@ -35,6 +38,8 @@ func Not(parser configo.ParserFunc) configo.ParserFunc {
 // also returns an error constructed of all other errors
 // This basically expects ANY of the parsers to succeed
 func Or(parsers ...configo.ParserFunc) configo.ParserFunc {
+	panicIfEmptyParseFunc(parsers)
+
 	return func(value string) error {
 		errs := make([]error, 0, len(parsers))
 		for _, f := range parsers {
@@ -54,6 +59,8 @@ func Or(parsers ...configo.ParserFunc) configo.ParserFunc {
 // all of the other results are expected to yield an error, otherwise this function returns an error.
 // This basically expects only ONE of the parsers to succeed.
 func Xor(parsers ...configo.ParserFunc) configo.ParserFunc {
+	panicIfEmptyParseFunc(parsers)
+
 	return func(value string) error {
 		errs := make([]error, 0, len(parsers))
 		successIndexes := make([]int, 0, 2)
@@ -81,6 +88,8 @@ func Xor(parsers ...configo.ParserFunc) configo.ParserFunc {
 // And expects that all provided parsers succeed
 // This expects ALL parsers to succeed.
 func And(parsers ...configo.ParserFunc) configo.ParserFunc {
+	panicIfEmptyParseFunc(parsers)
+
 	return func(value string) error {
 		for _, f := range parsers {
 			err := f(value)
@@ -94,6 +103,8 @@ func And(parsers ...configo.ParserFunc) configo.ParserFunc {
 
 // If conditional allows to use different parsers base don the passed condition.
 func If(condition *bool, trueCase configo.ParserFunc, falseCase configo.ParserFunc) configo.ParserFunc {
+	internal.PanicIfNil(condition, trueCase, falseCase)
+
 	return func(value string) error {
 		if *condition {
 			return trueCase(value)
@@ -105,6 +116,8 @@ func If(condition *bool, trueCase configo.ParserFunc, falseCase configo.ParserFu
 // OnlyIf executes the trueCase action only in the case that the condition is true
 // otherwise an empty function is returned
 func OnlyIf(condition *bool, trueCase configo.ParserFunc) configo.ParserFunc {
+	internal.PanicIfNil(condition, trueCase)
+
 	return func(value string) error {
 		if *condition {
 			return trueCase(value)
@@ -115,6 +128,8 @@ func OnlyIf(condition *bool, trueCase configo.ParserFunc) configo.ParserFunc {
 
 // OnlyIfNotNil executes the trueCase function when the condition is NOT nil at evaluation time
 func OnlyIfNotNil(condition interface{}, trueCase configo.ParserFunc) configo.ParserFunc {
+	internal.PanicIfNil(trueCase)
+
 	return func(value string) error {
 		if condition != nil {
 			return trueCase(value)
@@ -125,6 +140,8 @@ func OnlyIfNotNil(condition interface{}, trueCase configo.ParserFunc) configo.Pa
 
 // OnlyIfNotNil executes the trueCase function when the condition is nil at evaluation time
 func OnlyIfNil(condition interface{}, trueCase configo.ParserFunc) configo.ParserFunc {
+	internal.PanicIfNil(trueCase)
+
 	return func(value string) error {
 		if condition == nil {
 			return trueCase(value)

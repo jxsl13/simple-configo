@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	configo "github.com/jxsl13/simple-configo"
+	"github.com/jxsl13/simple-configo/internal"
 )
 
 var (
@@ -35,6 +36,8 @@ var (
 // that sets the parsed value to the passed referenced variable
 // out is a pointer to the variable that gets the parsed value assigned to.
 func String(out *string) configo.ParserFunc {
+	internal.PanicIfNil(out)
+
 	return func(value string) error {
 		*out = value
 		return nil
@@ -44,6 +47,8 @@ func String(out *string) configo.ParserFunc {
 // Bool is the default function that returns a function
 // that sets the 'out' referenced variable to the parsed value.
 func Bool(out *bool) configo.ParserFunc {
+	internal.PanicIfNil(out)
+
 	return func(value string) error {
 		b, ok := boolValues[value]
 		if !ok {
@@ -57,6 +62,8 @@ func Bool(out *bool) configo.ParserFunc {
 // Int parses a passed value and sets the passed out reference to the resulting value,
 // returns an error otherwise.
 func Int(out *int) configo.ParserFunc {
+	internal.PanicIfNil(out)
+
 	return func(value string) error {
 		i, err := strconv.Atoi(value)
 		if err != nil {
@@ -70,6 +77,8 @@ func Int(out *int) configo.ParserFunc {
 // Float parses a passed value and sets the passed out reference to the resulting value,
 // returns an error otherwise.
 func Float(out *float64, bitSize int) configo.ParserFunc {
+	internal.PanicIfNil(out)
+
 	return func(value string) error {
 		f, err := strconv.ParseFloat(value, bitSize)
 		if err != nil {

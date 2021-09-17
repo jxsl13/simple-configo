@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	configo "github.com/jxsl13/simple-configo"
+	"github.com/jxsl13/simple-configo/internal"
 )
 
 // RangesInt restricts the integer value to a distinct list of min-max ranges.
@@ -14,7 +15,11 @@ import (
 // #2: 0,3,9,10 	# range from 0 through 3 and from 9 through 10
 // #3: 0,10,2,12 	# rage from 0 through 12
 func RangesInt(out *int, minMaxRanges ...int) configo.ParserFunc {
+	internal.PanicIfNil(out)
+	internal.PanicIfEmptyInt(minMaxRanges)
 
+	// heap allocated and always there for lookup, does not need to be recreated on every function call
+	// that is returned below
 	distinctRanges := NewDistinctRangeListInt(minMaxRanges...)
 
 	return func(value string) error {
