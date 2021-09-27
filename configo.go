@@ -3,7 +3,6 @@ package configo
 import (
 	"errors"
 	"fmt"
-	"sync"
 
 	"github.com/joho/godotenv"
 )
@@ -13,15 +12,12 @@ import (
 // The second method returns a list of Option objects that
 // are everything that is needed to fill the struct fields of your
 // custom interface implementation of Config.
-// WARNING: In case your configuration also implements the sync.Locker interface,
-// you MUST NOT Lock()/RLock() your mutex in the Options() method.
 type Config interface {
 	Options() (options Options)
 }
 
 // ParseEnv parse the environment variables and fills all of the definied options on the
 // configuration.
-// INFO: goroutine safe if config implements the sync.Locker interface.
 func ParseEnv(cfgs ...Config) error {
 	return Parse(GetEnv(), cfgs...)
 }
@@ -77,18 +73,9 @@ func ParseEnvFileOrEnv(filePathOrEnvKey string, cfgs ...Config) error {
 
 // Parse the passed envoronment map into the config struct.
 // Every Config defines, how its Options look like and how those are parsed.
-// INFO: In case Config implements the sync.Locker inteface by either embedding an anonymous sync.Mutex or by
-// implementing the methods func (cfg *Config) Lock() and func (cfg *Config) Unlock(), those methods are called before
-// attempting to parse the option values.
-// This allows
 func Parse(env map[string]string, cfgs ...Config) error {
 	for _, cfg := range cfgs {
 		err := func(c Config) error {
-			locker, ok := cfg.(sync.Locker)
-			if ok {
-				locker.Lock()
-				defer locker.Unlock()
-			}
 			err := ParseOptions(cfg.Options(), env)
 			if err != nil {
 				return err
@@ -118,19 +105,12 @@ func ParseOptions(options Options, env map[string]string) error {
 // Unparse is the reverse operation of Parse. It retrieves the values from the configuration and
 // serializes them to their respective string values in order to be able to writ ethem back to either
 // the environment or to a file.
-// INFO: In case cfg implements the sync.Locker interface by either embedding an anonymous sync.Mutex or
-// implementing the Lock() and Unlock() methods, then those methods are called in order to guard the configuration values.
 func Unparse(cfgs ...Config) (map[string]string, error) {
 	resultMap := make(map[string]string)
 	for _, cfg := range cfgs {
 		// wrapped in a function call in order to directly unlock
 		// the mutex after the parsing is done.
 		err := func(c Config) error {
-			locker, ok := c.(sync.Locker)
-			if ok {
-				locker.Lock()
-				defer locker.Unlock() // unlocked on return
-			}
 			env, err := UnparseOptions(c.Options())
 			if err != nil {
 				return err
@@ -151,18 +131,11 @@ func Unparse(cfgs ...Config) (map[string]string, error) {
 // UnparseValidate unparses the values and tries to parse the values again in order to validate their values
 // this allows to have a complex ParserFunction but a simple UnparserFunction, as all of the validation logic is
 // provided via the ParserFunction.
-// INFO: UnparseValidate is goroutine safe in case cfg implements the sync.Locker interface by either embedding
-// the sync.Mutex struct anonymously or by implementing the Lock() and Unlock() methods.
 func UnparseValidate(cfgs ...Config) (map[string]string, error) {
 	resultEnv := make(map[string]string)
 	for _, cfg := range cfgs {
 
 		err := func(c Config) error {
-			locker, ok := c.(sync.Locker)
-			if ok {
-				locker.Lock()
-				defer locker.Unlock()
-			}
 			options := c.Options()
 			env, err := UnparseOptions(options)
 			if err != nil {
