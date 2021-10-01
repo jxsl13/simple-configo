@@ -82,7 +82,16 @@ func (o *Option) Parse(m map[string]string) error {
 		return fmt.Errorf("pre parse action of option '%s': %w", o.Key, err)
 	}
 
-	// evaluation
+	// mandatory values may be empty but only if the env value exists
+	// parse default value in case the option ir not mandatory or in
+	// the case that the option has a non-empty default value
+	if !o.Mandatory || o.DefaultValue != "" {
+		if err := tryParse(o.DefaultValue, o.ParseFunction); err != nil {
+			return fmt.Errorf("error in default value of option '%s': %w", o.Key, err)
+		}
+	}
+
+	// evaluation of environment map
 	value, ok := m[o.Key]
 	if !ok {
 		// value not found in env map
@@ -90,20 +99,11 @@ func (o *Option) Parse(m map[string]string) error {
 			// no default value and no value in environment
 			return fmt.Errorf("error: missing mandatory key: %s", o.Key)
 		}
-	}
-
-	// mandatory values may be empty but only if the env value exists,
-	if !o.Mandatory || o.DefaultValue != "" {
-		if err := tryParse(o.DefaultValue, o.ParseFunction); err != nil {
-			return fmt.Errorf("error in default value of option '%s': %w", o.Key, err)
-		}
-	}
-
-	// if we do get a valid value from the passed map, the default value is
-	// overwritten then
-	// pseudo options do not evaluate the value, but get the value from somewhere else other than the passed
-	// string map. They might prompt the user via the shell, read some file etc.
-	if ok {
+	} else {
+		// if we do get a valid value from the passed map, the default value is
+		// overwritten then
+		// pseudo options do not evaluate the value, but get the value from somewhere else other than the passed
+		// string map. They might prompt the user via the shell, read some file etc.
 		if err := tryParse(value, o.ParseFunction); err != nil {
 			return fmt.Errorf("error in value of option '%s': %w", o.Key, err)
 		}
