@@ -20,7 +20,7 @@ func Exists(filePath string) bool {
 // MkdirAll take sthe file path and removes the file name from the file
 // afterwards it creates all directories below that filepath.
 func MkdirAll(filePath string, perm ...fs.FileMode) error {
-	var mode fs.FileMode = 0600
+	var mode fs.FileMode = 0700
 	if len(perm) > 0 {
 		mode = perm[0]
 	}
@@ -34,7 +34,7 @@ func MkdirAll(filePath string, perm ...fs.FileMode) error {
 
 // Save allows to save the text at a given filePath
 func Save(text, filePath string, perm ...fs.FileMode) error {
-	var mode fs.FileMode = 0600
+	var mode fs.FileMode = 0700
 	if len(perm) > 0 {
 		mode = perm[0]
 	}
