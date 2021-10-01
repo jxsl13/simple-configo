@@ -63,7 +63,8 @@ func ParseEnvFileOrEnv(filePathOrEnvKey string, cfgs ...Config) error {
 	filePath := getFilePathOrKey(env, filePathOrEnvKey)
 	fileMap, err := godotenv.Read(filePath)
 	if err != nil {
-		return err
+		// no file, parse env only
+		return Parse(env)
 	}
 	// environment overrides env file values
 	env = update(fileMap, env)
