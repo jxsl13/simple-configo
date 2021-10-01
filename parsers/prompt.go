@@ -41,7 +41,6 @@ func PromptPassword(out, promptPrefix *string, validateFunc ...func(string) erro
 // PromptText prompts the user to enter a text. This only prompts the user in the case that
 // the corresponding environment variable does not contain any string data.
 func PromptText(out, promptPrefix *string, validateFunc ...func(string) error) configo.ParserFunc {
-	internal.PanicIfNil(out)
 	return func(value string) error {
 		if value != "" {
 			*out = value
@@ -60,7 +59,9 @@ func PromptText(out, promptPrefix *string, validateFunc ...func(string) error) c
 		if err != nil {
 			return err
 		}
-		*out = text
+		if out != nil {
+			*out = text
+		}
 		return nil
 	}
 }
@@ -70,8 +71,7 @@ func PromptText(out, promptPrefix *string, validateFunc ...func(string) error) c
 func PromptInt(out *int, promptPrefix *string) configo.ParserFunc {
 	internal.PanicIfNil(out)
 	return func(value string) error {
-		strValue := ""
-		return PromptText(&strValue, promptPrefix, Int(out))(value)
+		return PromptText(nil, promptPrefix, Int(out))(value)
 	}
 }
 
@@ -80,8 +80,7 @@ func PromptInt(out *int, promptPrefix *string) configo.ParserFunc {
 func PromptBool(out *bool, promptPrefix *string) configo.ParserFunc {
 	internal.PanicIfNil(out)
 	return func(value string) error {
-		strValue := ""
-		return PromptText(&strValue, promptPrefix, Bool(out))(value)
+		return PromptText(nil, promptPrefix, Bool(out))(value)
 	}
 }
 
@@ -90,8 +89,7 @@ func PromptBool(out *bool, promptPrefix *string) configo.ParserFunc {
 func PromptFloat(out *float64, bitSize int, promptPrefix *string) configo.ParserFunc {
 	internal.PanicIfNil(out)
 	return func(value string) error {
-		strValue := ""
-		return PromptText(&strValue, promptPrefix, Float(out, bitSize))(value)
+		return PromptText(nil, promptPrefix, Float(out, bitSize))(value)
 	}
 }
 
