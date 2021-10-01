@@ -74,7 +74,9 @@ func UpdateEnvFile(env map[string]string, filePathOrEnvKey string) error {
 func update(old, new map[string]string) map[string]string {
 	m := old
 	for k, v := range new {
-		m[k] = v
+		if v != "" {
+			m[k] = v
+		}
 	}
 	return m
 }
