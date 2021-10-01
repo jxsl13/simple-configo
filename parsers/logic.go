@@ -8,16 +8,6 @@ import (
 	"github.com/jxsl13/simple-configo/internal"
 )
 
-// error formatting
-func fmtErr(prefix string, errs []error) error {
-	// format errors
-	cErr := errors.New(prefix)
-	for _, err := range errs {
-		cErr = fmt.Errorf("%w\n - %v", cErr, err)
-	}
-	return cErr
-}
-
 // Not negates the result of a given parser
 func Not(parser configo.ParserFunc) configo.ParserFunc {
 	internal.PanicIfNil(parser)
@@ -51,7 +41,7 @@ func Or(parsers ...configo.ParserFunc) configo.ParserFunc {
 				return nil
 			}
 		}
-		return fmtErr("could not parse: ", errs)
+		return internal.FmtErr("could not parse: ", errs)
 	}
 }
 
@@ -76,7 +66,7 @@ func Xor(parsers ...configo.ParserFunc) configo.ParserFunc {
 		diff := len(parsers) - len(errs)
 		if diff == 0 {
 			// no success
-			return fmtErr("could not parse: ", errs)
+			return internal.FmtErr("could not parse: ", errs)
 		} else if diff != 1 {
 			// more than one success
 			return fmt.Errorf("multiple parsers succeeded, but only one was allowed to succeed: %v", successIndexes)
@@ -101,7 +91,7 @@ func And(parsers ...configo.ParserFunc) configo.ParserFunc {
 	}
 }
 
-// If conditional allows to use different parsers base don the passed condition.
+// If conditional allows to use different parsers based on the passed condition.
 func If(condition *bool, trueCase configo.ParserFunc, falseCase configo.ParserFunc) configo.ParserFunc {
 	internal.PanicIfNil(condition, trueCase, falseCase)
 
