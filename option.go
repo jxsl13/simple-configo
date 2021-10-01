@@ -130,7 +130,7 @@ func (o *Option) Unparse() (string, error) {
 		if errors.Is(err, ErrSkipUnparse) {
 			return "", ErrSkipUnparse
 		}
-		return "", fmt.Errorf("pre unparse action: %w", err)
+		return "", fmt.Errorf("pre unparse action of the option '%s': %w", o.Key, err)
 	}
 
 	// Unparse (serialize) option values
@@ -155,7 +155,7 @@ func (o *Option) Unparse() (string, error) {
 	if err != nil {
 		// at this point we cannot skip the unparsing(serialization),
 		// as it has already happened.
-		return "", fmt.Errorf("post unparse action: %w", err)
+		return "", fmt.Errorf("post unparse action of the option '%s': %w", o.Key, err)
 	}
 
 	return value, nil
