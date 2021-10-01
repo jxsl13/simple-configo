@@ -153,6 +153,9 @@ func (o *Option) Unparse() (string, error) {
 	// PostUnparseAction may be used to close connections, file handles, etc.
 	err = tryExecAction(o.PostUnparseAction)
 	if err != nil {
+		if errors.Is(err, ErrSkipUnparse) {
+			return "", ErrSkipUnparse
+		}
 		// at this point we cannot skip the unparsing(serialization),
 		// as it has already happened.
 		return "", fmt.Errorf("post unparse action of the option '%s': %w", o.Key, err)
