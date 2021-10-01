@@ -10,5 +10,13 @@ func ValueOrDefaultString(s *string, defaultString ...string) string {
 		def = *s
 	}
 	return def
+}
 
+func Contains(list []string, value string) bool {
+	for _, element := range list {
+		if element == value {
+			return true
+		}
+	}
+	return false
 }

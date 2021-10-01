@@ -1,53 +1,16 @@
 package parsers
 
 import (
-	"bufio"
-	"fmt"
-	"io/fs"
-	"os"
+	"strings"
 
 	configo "github.com/jxsl13/simple-configo"
 	"github.com/jxsl13/simple-configo/internal"
-	"golang.org/x/term"
+	"github.com/manifoldco/promptui"
 )
-
-var (
-	stdinFd = int(os.Stdin.Fd())
-)
-
-func promptPassword(linePrefix string) (string, error) {
-
-	fmt.Print(linePrefix)
-	password, err := term.ReadPassword(stdinFd)
-
-	if err != nil {
-		return "", err
-	}
-
-	return string(password), nil
-}
-
-// loads or prompts and saves password
-func loadOrPromptPassword(promptPrefix, filePath string, perm ...fs.FileMode) (string, error) {
-	text, err := internal.Load(filePath)
-	if err == nil {
-		return text, nil
-	}
-	// could not load
-	text, err = promptPassword(promptPrefix)
-	if err != nil {
-		return "", err
-	}
-	err = internal.Save(text, filePath, perm...)
-	if err != nil {
-		return "", err
-	}
-	return text, nil
-}
 
 // PromptPassword prompts the user for the password in case the to be parsed map value does not contain
 // any string data, meaning the user is only prompted when the e.g. environment variable doe snot exist or is empty.
-func PromptPassword(out, promptPrefix *string) configo.ParserFunc {
+func PromptPassword(out, promptPrefix *string, validateFunc ...func(string) error) configo.ParserFunc {
 	internal.PanicIfNil(out, promptPrefix)
 
 	return func(value string) error {
@@ -56,23 +19,17 @@ func PromptPassword(out, promptPrefix *string) configo.ParserFunc {
 			return nil
 		}
 
-		password, err := promptPassword(*promptPrefix)
-		fmt.Print("\n")
-		if err != nil {
-			return err
+		prompt := promptui.Prompt{
+			Label:       internal.ValueOrDefaultString(promptPrefix),
+			Mask:        '*',
+			HideEntered: true,
 		}
-		*out = password
-		return nil
-	}
-}
 
-// LoadOrPromptPassword tries to load the passed file and extract its string content or prompts the user in the shell
-// for entering their password (invisible) and then saves it to the passed file.
-func LoadOrPromptPassword(out, promptPrefix, filePath *string, perm ...fs.FileMode) configo.ParserFunc {
-	internal.PanicIfNil(out, promptPrefix, filePath)
+		if len(validateFunc) > 0 {
+			prompt.Validate = validateFunc[0]
+		}
 
-	return func(value string) error {
-		text, err := loadOrPromptPassword(*promptPrefix, *filePath, perm...)
+		text, err := prompt.Run()
 		if err != nil {
 			return err
 		}
@@ -81,58 +38,167 @@ func LoadOrPromptPassword(out, promptPrefix, filePath *string, perm ...fs.FileMo
 	}
 }
 
-// loads or prompts and saves password
-func loadOrPromptText(promptPrefix, filePath string, perm ...fs.FileMode) (string, error) {
-	text, err := internal.Load(filePath)
-	if err == nil {
-		return text, nil
-	}
-	// could not load
-	text = promptText(promptPrefix)
-	err = internal.Save(text, filePath, perm...)
-	if err != nil {
-		return "", err
-	}
-	return text, nil
-}
-
-func promptText(linePrefix string) string {
-	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Print(linePrefix)
-	scanner.Scan()
-	return scanner.Text()
-}
-
 // PromptText prompts the user to enter a text. This only prompts the user in the case that
-// the corresponding environment variable doe snot contain any string data.
-func PromptText(out, promptPrefix *string) configo.ParserFunc {
+// the corresponding environment variable does not contain any string data.
+func PromptText(out, promptPrefix *string, validateFunc ...func(string) error) configo.ParserFunc {
+	internal.PanicIfNil(out)
 	return func(value string) error {
 		if value != "" {
 			*out = value
 			return nil
 		}
-		text := promptText(
-			internal.ValueOrDefaultString(promptPrefix),
-		)
-		*out = text
-		return nil
-	}
-}
 
-// LoadOrPromptText either loads the content of the filePath and sets the string value to the file's content or die prompt the user to enter
-// the data and then saves the result in the specified file.
-func LoadOrPromptText(out, promptPrefix, filePath *string, perm ...fs.FileMode) configo.ParserFunc {
-	return func(value string) error {
+		prompt := promptui.Prompt{
+			Label: internal.ValueOrDefaultString(promptPrefix),
+		}
 
-		text, err := loadOrPromptText(
-			internal.ValueOrDefaultString(promptPrefix),
-			internal.ValueOrDefaultString(filePath),
-			perm...,
-		)
+		if len(validateFunc) > 0 {
+			prompt.Validate = validateFunc[0]
+		}
+
+		text, err := prompt.Run()
 		if err != nil {
 			return err
 		}
 		*out = text
 		return nil
+	}
+}
+
+// PromptInt prompts the user to enter a string. This only prompts the user in the case that
+// the corresponding environment variable does not contain any string data.
+func PromptInt(out *int, promptPrefix *string) configo.ParserFunc {
+	internal.PanicIfNil(out)
+	return func(value string) error {
+		strValue := ""
+		return PromptText(&strValue, promptPrefix, Int(out))(value)
+	}
+}
+
+// PromptBool prompts the user to enter a boolean. This only prompts the user in the case that
+// the corresponding environment variable does not contain any string data.
+func PromptBool(out *bool, promptPrefix *string) configo.ParserFunc {
+	internal.PanicIfNil(out)
+	return func(value string) error {
+		strValue := ""
+		return PromptText(&strValue, promptPrefix, Bool(out))(value)
+	}
+}
+
+// PromptFloat prompts the user to enter a float. This only prompts the user in the case that
+// the corresponding environment variable does not contain any string data.
+func PromptFloat(out *float64, bitSize int, promptPrefix *string) configo.ParserFunc {
+	internal.PanicIfNil(out)
+	return func(value string) error {
+		strValue := ""
+		return PromptText(&strValue, promptPrefix, Float(out, bitSize))(value)
+	}
+}
+
+// PromptChoiceText prompts the user to select one of the provided strings. This only prompts the user in the case that
+// the corresponding environment variable does not contain any string data.
+func PromptChoiceText(out *string, promptPrefix *string, allowed ...string) configo.ParserFunc {
+	return promptChoice(out, promptPrefix, allowed)
+}
+
+func promptChoice(out *string, promptPrefix *string, allowed []string, parseFunc ...func(string) error) configo.ParserFunc {
+	internal.PanicIfNil(promptPrefix)
+	internal.PanicIfEmptyString(allowed)
+
+	allowedList := listToSortedUniqueListString(allowed)
+
+	return func(value string) error {
+		if value != "" {
+			*out = value
+			return nil
+		}
+
+		sel := promptui.Select{
+			Label: internal.ValueOrDefaultString(promptPrefix),
+			Items: allowedList,
+		}
+
+		_, text, err := sel.Run()
+		if err != nil {
+			return err
+		}
+
+		if out != nil {
+			*out = text
+		}
+		if len(parseFunc) > 0 {
+			return parseFunc[0](value)
+		}
+		return nil
+	}
+}
+
+// PromptChoiceInt prompts the user to select one of the provided integers. This only prompts the user in the case that
+// the corresponding environment variable does not contain any string data.
+func PromptChoiceInt(out *int, promptPrefix *string, allowed []int) configo.ParserFunc {
+	internal.PanicIfNil(out, promptPrefix)
+	internal.PanicIfEmptyInt(allowed)
+
+	allowedList := intListToStringList(listToSortedUniqueListInt(allowed))
+
+	return func(value string) error {
+		if value != "" {
+			return Int(out)(value)
+		}
+		return promptChoice(nil, promptPrefix, allowedList, Int(out))(value)
+	}
+}
+
+// PromptChoiceFloat prompts the user to select one of the provided floats. This only prompts the user in the case that
+// the corresponding environment variable does not contain any string data.
+func PromptChoiceFloat(out *float64, bitSize int, promptPrefix *string, allowed []float64) configo.ParserFunc {
+	internal.PanicIfNil(out, promptPrefix)
+	internal.PanicIfEmptyFloat(allowed)
+
+	allowedList := floatListToStringList(listToSortedUniqueListFloat(allowed), bitSize)
+
+	return func(value string) error {
+		if value != "" {
+			return Float(out, bitSize)(value)
+		}
+
+		return promptChoice(nil, promptPrefix, allowedList, Float(out, bitSize))(value)
+	}
+}
+
+// PromptChoiceBool prompts the user to select one of the provided "y/n". This only prompts the user in the case that
+// the corresponding environment variable does not contain any string data.
+func PromptChoiceBool(out *bool, promptPrefix *string, defaultSelection ...bool) configo.ParserFunc {
+	internal.PanicIfNil(out, promptPrefix)
+
+	return func(value string) error {
+		if value != "" {
+			return Bool(out)(value)
+		}
+
+		t := "y"
+		f := "n"
+		pos := 1
+		if len(defaultSelection) > 0 {
+			capitalize := defaultSelection[0]
+			if capitalize {
+				t = strings.ToUpper(t)
+				pos = 0
+			} else {
+				f = strings.ToUpper(f)
+				pos = 1
+			}
+		}
+		sel := promptui.Select{
+			Label:     internal.ValueOrDefaultString(promptPrefix),
+			Items:     []string{t, f},
+			CursorPos: pos,
+		}
+
+		_, text, err := sel.Run()
+		if err != nil {
+			return err
+		}
+		return Bool(out)(text)
 	}
 }
