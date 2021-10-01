@@ -61,14 +61,15 @@ func ParseEnvFileOrEnv(filePathOrEnvKey string, cfgs ...Config) error {
 
 	env := GetEnv()
 	filePath := getFilePathOrKey(env, filePathOrEnvKey)
-
 	fileMap, err := godotenv.Read(filePath)
 	if err != nil {
-		// parse environment
-		return Parse(env, cfgs...)
+		return err
 	}
-	// parse fileMap
-	return Parse(fileMap, cfgs...)
+	// environment overrides env file values
+	env = update(fileMap, env)
+
+	return Parse(env, cfgs...)
+
 }
 
 // Parse the passed envoronment map into the config struct.
