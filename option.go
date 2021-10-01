@@ -79,7 +79,7 @@ func (o *Option) IsOption() bool {
 func (o *Option) Parse(m map[string]string) error {
 
 	if err := tryExecAction(o.PreParseAction); err != nil {
-		return fmt.Errorf("pre parse action: %w", err)
+		return fmt.Errorf("pre parse action of option '%s': %w", o.Key, err)
 	}
 
 	// evaluation
@@ -110,7 +110,7 @@ func (o *Option) Parse(m map[string]string) error {
 	}
 
 	if err := tryExecAction(o.PostParseAction); err != nil {
-		return fmt.Errorf("post parse action: %w", err)
+		return fmt.Errorf("post parse action of option '%s': %w", o.Key, err)
 	}
 	return nil
 }
