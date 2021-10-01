@@ -114,7 +114,6 @@ func If(condition *bool, trueCase configo.ParserFunc, falseCase configo.ParserFu
 }
 
 // OnlyIf executes the trueCase action only in the case that the condition is true
-// otherwise an empty function is returned
 func OnlyIf(condition *bool, trueCase configo.ParserFunc) configo.ParserFunc {
 	internal.PanicIfNil(condition, trueCase)
 
@@ -123,6 +122,18 @@ func OnlyIf(condition *bool, trueCase configo.ParserFunc) configo.ParserFunc {
 			return trueCase(value)
 		}
 		return nil
+	}
+}
+
+// OnlyIfNot executes the falseCase action only in the case that the condition is false
+func OnlyIfNot(condition *bool, falseCase configo.ParserFunc) configo.ParserFunc {
+	internal.PanicIfNil(condition, falseCase)
+
+	return func(value string) error {
+		if *condition {
+			return nil
+		}
+		return falseCase(value)
 	}
 }
 

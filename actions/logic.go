@@ -141,6 +141,19 @@ func OnlyIf(condition *bool, trueCase configo.ActionFunc) configo.ActionFunc {
 	}
 }
 
+// OnlyIfNot executes the falseCase action only in the case that the condition is false at the time when the
+// parent option is parsed. Not at the time of option definition.
+func OnlyIfNot(condition *bool, falseCase configo.ActionFunc) configo.ActionFunc {
+	internal.PanicIfNil(condition, falseCase)
+
+	return func() error {
+		if *condition {
+			return nil
+		}
+		return falseCase()
+	}
+}
+
 // OnlyIfAction executes the true case action at the time of option parsing only
 // when the condition does return nil at the time of option parsing
 func OnlyIfAction(condition configo.ActionFunc, trueCase configo.ActionFunc) configo.ActionFunc {
