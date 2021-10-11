@@ -57,6 +57,7 @@ func UnparseEnvFile(filePathOrEnvKey string, cfgs ...Config) error {
 
 // ParseEnvFileOrEnv tries to parse the env file first and then the environment in case the file
 // parsing fails.
+// filePathOrEnvKey may be a file path or an environment key containing a file path
 func ParseEnvFileOrEnv(filePathOrEnvKey string, cfgs ...Config) error {
 
 	env := GetEnv()
@@ -77,13 +78,7 @@ func ParseEnvFileOrEnv(filePathOrEnvKey string, cfgs ...Config) error {
 // Every Config defines, how its Options look like and how those are parsed.
 func Parse(env map[string]string, cfgs ...Config) error {
 	for _, cfg := range cfgs {
-		err := func(c Config) error {
-			err := ParseOptions(cfg.Options(), env)
-			if err != nil {
-				return err
-			}
-			return nil
-		}(cfg)
+		err := ParseOptions(cfg.Options(), env)
 		if err != nil {
 			return err
 		}
@@ -100,7 +95,6 @@ func ParseOptions(options Options, env map[string]string) error {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -110,22 +104,13 @@ func ParseOptions(options Options, env map[string]string) error {
 func Unparse(cfgs ...Config) (map[string]string, error) {
 	resultMap := make(map[string]string)
 	for _, cfg := range cfgs {
-		// wrapped in a function call in order to directly unlock
-		// the mutex after the parsing is done.
-		err := func(c Config) error {
-			env, err := UnparseOptions(c.Options())
-			if err != nil {
-				return err
-			}
-			for k, v := range env {
-				resultMap[k] = v
-			}
-			return nil
-		}(cfg)
+		env, err := UnparseOptions(cfg.Options())
 		if err != nil {
 			return nil, err
 		}
-
+		for k, v := range env {
+			resultMap[k] = v
+		}
 	}
 	return resultMap, nil
 }
