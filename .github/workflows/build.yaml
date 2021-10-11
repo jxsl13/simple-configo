@@ -4,8 +4,8 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [1.16.x]
-        platform: [ubuntu-latest] # redis actions do not support macos-latest and windows-latest
+        go-version: [ '1.16', '1.17' ]
+        platform: [ 'ubuntu-latest', 'macos-latest', 'windows-latest' ]
     runs-on: ${{ matrix.platform }}
     steps:
     - name: Install Go
