@@ -745,7 +745,7 @@ func (fc *flagCfg) Options() configo.Options {
 
 func TestParseFlags(t *testing.T) {
 	os.Args = append(os.Args,
-		"--test=value",
+		"-test=value",
 	)
 	os.Setenv("PETER", "1")
 	os.Setenv("INVALID_PATH", "./invalid.env")
@@ -787,7 +787,7 @@ func (fc *flag2Cfg) Options() configo.Options {
 
 func TestParseFlags2(t *testing.T) {
 	os.Args = append(os.Args,
-		"--test2=value2",
+		"-test2=value2",
 	)
 	os.Setenv("PETER2", "2")
 
