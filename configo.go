@@ -58,8 +58,8 @@ func UnparseEnvFile(filePathOrEnvKey string, cfgs ...Config) error {
 // ParseEnvFileOrEnv tries to parse the env file first and then the environment in case the file
 // parsing fails.
 // filePathOrEnvKey may be a file path or an environment key containing a file path
+// In case a variable is not found in theenv file the next level is tried which is the environment.
 func ParseEnvFileOrEnv(filePathOrEnvKey string, cfgs ...Config) error {
-
 	env := GetEnv()
 	filePath := getFilePathOrKey(env, filePathOrEnvKey)
 	fileMap, err := godotenv.Read(filePath)
@@ -67,11 +67,51 @@ func ParseEnvFileOrEnv(filePathOrEnvKey string, cfgs ...Config) error {
 		// no file, parse env only
 		return Parse(env, cfgs...)
 	}
-	// environment overrides env file values
+	// environment extends and overrides env file values
 	env = update(fileMap, env)
 
 	return Parse(env, cfgs...)
+}
 
+// ParseFlags parses the flags provided to the application based on the
+// provided option definitions in every passed Config
+func ParseFlags(cfgs ...Config) error {
+	flags := GetFlags(cfgs...)
+	return Parse(flags, cfgs...)
+}
+
+// ParseEnvOrFlags fetches config values from the .env file, the environment
+// and from the flags and parses the configurations with those values provided as key value map.
+func ParseEnvOrFlags(cfgs ...Config) error {
+	// override & extend env values with flag values
+	env := update(GetEnv(), GetFlags(cfgs...))
+
+	// parse the combined map
+	return Parse(env, cfgs...)
+}
+
+// ParseEnvFileOrEnvOrFlags fetches config values from the .env file, the environment
+// and from the flags and parses the configurations with those values provided as key value map.
+// Warning: do not call this function multiple times with the same configurations, as redefiition of flag names
+// may cause a panic.
+func ParseEnvFileOrEnvOrFlags(filePathOrEnvKey string, cfgs ...Config) error {
+	// must always be parsed in order to fetch the potential file path
+	env := GetEnv()
+	flags := GetFlags(cfgs...)
+
+	filePath := getFilePathOrKey(env, filePathOrEnvKey)
+	fileMap, err := godotenv.Read(filePath)
+	if err != nil {
+		// parse environment variables extended and overwritten by flag parameters
+		return Parse(update(env, flags), cfgs...)
+	}
+
+	// override and update .env file with environment variables
+	// override and update .env file and environment variables with flag values
+	env = update(update(fileMap, env), flags)
+
+	// parse the combined map
+	return Parse(env, cfgs...)
 }
 
 // Parse the passed envoronment map into the config struct.

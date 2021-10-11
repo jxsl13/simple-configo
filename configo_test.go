@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -719,5 +720,84 @@ func TestActionOption(t *testing.T) {
 			}
 
 		})
+	}
+}
+
+type flagCfg struct {
+	test  string
+	peter int
+}
+
+func (fc *flagCfg) Options() configo.Options {
+	return configo.Options{
+		{
+			Key:           "TEST",
+			DefaultValue:  "default test",
+			ParseFunction: parsers.String(&fc.test),
+		},
+		{
+			Key:           "PETER",
+			DefaultValue:  "99",
+			ParseFunction: parsers.Int(&fc.peter),
+		},
+	}
+}
+
+func TestParseFlags(t *testing.T) {
+	os.Args = append(os.Args,
+		"--test", "value",
+	)
+	os.Setenv("PETER", "1")
+	os.Setenv("INVALID_PATH", "./invalid.env")
+
+	fc := &flagCfg{}
+	err := configo.ParseEnvFileOrEnvOrFlags("INVALID_PATH", fc)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if fc.peter != 1 {
+		t.Fatalf("fc.peter: want %d, got  %d", 1, fc.peter)
+	}
+
+	if fc.test != "value" {
+		t.Fatalf("fc.test: want %s, got  %s", "value", fc.test)
+	}
+}
+
+type flag2Cfg struct {
+	test  string
+	peter int
+}
+
+func (fc *flag2Cfg) Options() configo.Options {
+	return configo.Options{
+		{
+			Key:           "TEST2",
+			DefaultValue:  "default test",
+			ParseFunction: parsers.String(&fc.test),
+		},
+		{
+			Key:           "PETER2",
+			DefaultValue:  "99",
+			ParseFunction: parsers.Int(&fc.peter),
+		},
+	}
+}
+
+func TestParseFlags2(t *testing.T) {
+	os.Args = append(os.Args,
+		"--test2", "value2",
+	)
+	os.Setenv("PETER2", "2")
+
+	fc2 := &flag2Cfg{}
+	configo.ParseEnvOrFlags(fc2)
+	if fc2.peter != 2 {
+		t.Fatalf("fc2.peter2: want %d, got  %d", 1, fc2.peter)
+	}
+
+	if fc2.test != "value2" {
+		t.Fatalf("fc2.test: want %s, got  %s", "value2", fc2.test)
 	}
 }
