@@ -17,6 +17,10 @@ func GetFlags(cfgs ...Config) map[string]string {
 	envP := make(map[string]*string, len(options))
 
 	for _, opt := range options {
+		if opt.IsAction() {
+			// skip actions that do not have value parsing logic
+			continue
+		}
 
 		flagName := transformKeyToFlagName(opt.Key)
 		// define a flag for every option, do not set default values,
