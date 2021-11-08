@@ -11,7 +11,6 @@ type Config interface {
 ```
 
 The `Options` method returns a list of `Option` objects that contain all of the logic needed to parse a config file into your custom struct fields.
-The `Option` function must not lock a mutex in case your implementing struct embeds an anonymous `sync.Mutex`.
 
 I usually fetch key-value pairs from a `.env` file as well the environment variables of your current user session.
 That's why the `configo.Parse`function looks the way it does, you pass an `env map[string]string` as a parameter to the funcion as well as a type implementing the `Config` interface.
