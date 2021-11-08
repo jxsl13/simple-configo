@@ -723,6 +723,11 @@ func TestActionOption(t *testing.T) {
 	}
 }
 
+func args(flags ...string) []string {
+	result := []string{os.Args[0]}
+	return append(result, flags...)
+}
+
 type flagCfg struct {
 	test  string
 	peter int
@@ -744,12 +749,12 @@ func (fc *flagCfg) Options() configo.Options {
 }
 
 func TestParseFlags(t *testing.T) {
-	os.Args = append(os.Args,
-		"-test", "value",
-	)
+	os.Args = args("--test", "value")
+
 	os.Setenv("PETER", "1")
 	os.Setenv("INVALID_PATH", "./invalid.env")
 
+	t.Logf("Args: %v", os.Args)
 	fc := &flagCfg{}
 	err := configo.ParseEnvFileOrEnvOrFlags("INVALID_PATH", fc)
 	if err != nil {
@@ -786,9 +791,8 @@ func (fc *flag2Cfg) Options() configo.Options {
 }
 
 func TestParseFlags2(t *testing.T) {
-	os.Args = append(os.Args,
-		"-test2=value2",
-	)
+	os.Args = args("--test2=value2")
+
 	os.Setenv("PETER2", "2")
 
 	fc2 := &flag2Cfg{}

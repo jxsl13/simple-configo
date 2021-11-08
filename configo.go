@@ -3,6 +3,7 @@ package configo
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/joho/godotenv"
 )
@@ -76,15 +77,32 @@ func ParseEnvFileOrEnv(filePathOrEnvKey string, cfgs ...Config) error {
 // ParseFlags parses the flags provided to the application based on the
 // provided option definitions in every passed Config
 func ParseFlags(cfgs ...Config) error {
-	flags := GetFlags(cfgs...)
-	return Parse(flags, cfgs...)
+	return parseFlags(os.Args[1:], cfgs...)
+}
+
+// allows to pass custom args for testing
+func parseFlags(args []string, cfgs ...Config) error {
+	flagMap, err := GetFlagMap(args, cfgs...)
+	if err != nil {
+		return err
+	}
+	return Parse(flagMap, cfgs...)
 }
 
 // ParseEnvOrFlags fetches config values from the .env file, the environment
 // and from the flags and parses the configurations with those values provided as key value map.
 func ParseEnvOrFlags(cfgs ...Config) error {
+	return parseEnvOrFlags(os.Args[1:], cfgs...)
+}
+
+// parseEnvOrFlags allows passing of custom args for testing
+func parseEnvOrFlags(args []string, cfgs ...Config) error {
 	// override & extend env values with flag values
-	env := update(GetEnv(), GetFlags(cfgs...))
+	flagMap, err := GetFlagMap(args, cfgs...)
+	if err != nil {
+		return err
+	}
+	env := update(GetEnv(), flagMap)
 
 	// parse the combined map
 	return Parse(env, cfgs...)
@@ -95,9 +113,17 @@ func ParseEnvOrFlags(cfgs ...Config) error {
 // Warning: do not call this function multiple times with the same configurations, as redefiition of flag names
 // may cause a panic.
 func ParseEnvFileOrEnvOrFlags(filePathOrEnvKey string, cfgs ...Config) error {
+	return parseEnvFileOrEnvOrFlags(filePathOrEnvKey, os.Args[1:], cfgs...)
+}
+
+// parseEnvFileOrEnvOrFlags allows to pass custom os.Args[1:] for testing
+func parseEnvFileOrEnvOrFlags(filePathOrEnvKey string, args []string, cfgs ...Config) error {
 	// must always be parsed in order to fetch the potential file path
 	env := GetEnv()
-	flags := GetFlags(cfgs...)
+	flags, err := GetFlagMap(args, cfgs...)
+	if err != nil {
+		return err
+	}
 
 	filePath := getFilePathOrKey(env, filePathOrEnvKey)
 	fileMap, err := godotenv.Read(filePath)
