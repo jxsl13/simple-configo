@@ -37,7 +37,6 @@ import (
 
 // MyConfig is a custom configuration that I want to use.
 type MyConfig struct {
-    sync.Mutex    // optional mutex to make the config goroutine safe
     SomeBool      bool
     SomeInt       int
     SomeFloat     float64
@@ -50,7 +49,6 @@ type MyConfig struct {
 // Options returns a list of available options that can be configured for this
 // config object
 func (m *MyConfig) Options() (options configo.Options) {
-    // WARNING: no locking in this function.
     // NOTE: delimiter is parsed before the other values, this order is important,
     // as the delimiter is used afterwards.
     optionsList := configo.Options{
