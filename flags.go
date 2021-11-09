@@ -40,6 +40,40 @@ func GetFlagMap(osArgs []string, cfgs ...Config) (map[string]string, error) {
 	return getFlagMapWithErrorHandling(osArgs, flag.ContinueOnError, cfgs...)
 }
 
+// GetFlagSet constructs a flag.FlagSet from your configs that may be registered with cli tools for auto completion purposes.
+// e.g. Cobra/Viper
+// you may iterate ove rthe flagset with .Visit//.VisitAll
+// The main purpose of this is to define auto completion references.
+func GetFlagSet(setName string, errHandling flag.ErrorHandling, cfgs ...Config) *flag.FlagSet {
+	options := Options{}
+	for _, cfg := range cfgs {
+		options = append(options, cfg.Options()...)
+	}
+
+	// single key -> last description of that key
+	flagDefinitions := make(map[string]string, len(options))
+
+	for _, opt := range options {
+		if opt.IsAction() {
+			// skip actions that do not have value parsing logic
+			continue
+		}
+
+		_, found := flagDefinitions[opt.Key]
+		if !found || (found && opt.Description != "") {
+			flagDefinitions[opt.Key] = opt.Description
+		}
+	}
+
+	flags := flag.NewFlagSet(setName, errHandling)
+	for key, description := range flagDefinitions {
+		flagName := KeyToFlagNameTransformer(key)
+		// ignore the result pointer
+		flags.String(flagName, "", description)
+	}
+	return flags
+}
+
 // getFlagMapWithErrorHandling parses the provided args according to your configo definitions.
 func getFlagMapWithErrorHandling(osArgs []string, errHandling flag.ErrorHandling, cfgs ...Config) (map[string]string, error) {
 	options := Options{}
