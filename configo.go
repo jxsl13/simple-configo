@@ -23,6 +23,20 @@ func ParseEnv(cfgs ...Config) error {
 	return Parse(GetEnv(), cfgs...)
 }
 
+// OptionDefaults returns a map of option keys and option default values
+// for options that define at least a ParseFunction or UnparseFunction
+func OptionDefaults(cfgs ...Config) map[string]string {
+	m := make(map[string]string, len(cfgs)*2)
+	for _, c := range cfgs {
+		for _, opt := range c.Options() {
+			if opt.IsOption() {
+				m[opt.Key] = opt.DefaultValue
+			}
+		}
+	}
+	return m
+}
+
 func getFilePathOrKey(env map[string]string, filePathOrEnvKey string) string {
 	filePath := filePathOrEnvKey
 	value, found := env[filePathOrEnvKey]

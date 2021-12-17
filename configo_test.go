@@ -11,6 +11,7 @@ import (
 
 	configo "github.com/jxsl13/simple-configo"
 	"github.com/jxsl13/simple-configo/parsers"
+	"github.com/stretchr/testify/assert"
 )
 
 type ErrorConfig struct {
@@ -804,4 +805,18 @@ func TestParseFlags2(t *testing.T) {
 	if fc2.test != "value2" {
 		t.Fatalf("fc2.test: want %s, got  %s", "value2", fc2.test)
 	}
+}
+
+func TestOptionDefaults(t *testing.T) {
+	assert := assert.New(t)
+
+	m := configo.OptionDefaults(&flag2Cfg{})
+	assert.Contains(m, "TEST2")
+	assert.Contains(m, "PETER2")
+
+	assert.Equal(m, map[string]string{
+		"TEST2":  "default test",
+		"PETER2": "99",
+	})
+
 }
